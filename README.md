@@ -335,47 +335,6 @@ python professional_portfolio_optimizer_fixed.py
 - Recomendaciones de estrategia
 - Tiempo de ejecución: ~2 minutos
 
-## 📁 Cómo Agregar Imágenes al README
-
-### Estructura de Carpetas Recomendada
-```
-proyecto/
-├── professional_portfolio_optimizer_fixed.py
-├── README.md
-└── images/
-    ├── cumulative_returns_max_sharpe.png
-    ├── drawdown_max_sharpe.png
-    ├── rolling_sharpe_max_sharpe.png
-    ├── portfolio_composition.png
-    ├── monthly_heatmap.png
-    ├── risk_return_scatter.png
-    └── turnover_analysis.png
-```
-
-### Sintaxis Markdown para Imágenes
-```markdown
-## 📊 Ejemplos de Visualizaciones
-
-### Cumulative Returns
-![Cumulative Returns](images/cumulative_returns_max_sharpe.png)
-
-### Drawdown Analysis
-![Drawdown Analysis](images/drawdown_max_sharpe.png)
-
-### Portfolio Composition
-![Portfolio Composition](images/portfolio_composition.png)
-
-### Risk-Return Analysis
-![Risk-Return Scatter](images/risk_return_scatter.png)
-```
-
-### Proceso para Agregar Imágenes
-1. **Ejecutar el código** y guardar los gráficos
-2. **Crear carpeta `images/`** en tu repositorio
-3. **Subir archivos PNG/JPG** a la carpeta
-4. **Hacer commit** de las imágenes
-5. **Actualizar README.md** con las rutas correctas
-
 ## 🔬 Supuestos y Limitaciones
 
 ### Supuestos del Modelo
@@ -415,14 +374,96 @@ proyecto/
 - [ ] Risk monitoring dashboard
 - [ ] Performance attribution analysis
 
-## 📞 Contacto y Contribuciones
+## 📊 Ejemplos de Visualizaciones
 
-Este proyecto implementa técnicas de nivel institucional para gestión cuantitativa de portafolios. Las contribuciones son bienvenidas, especialmente en:
+### 🎯 Prioridad 1: Análisis de Performance
 
-- Nuevos algoritmos de optimización
-- Mejoras en el risk modeling
-- Visualizaciones adicionales
-- Documentación y tests
+#### Cumulative Returns - Comparación vs S&P 500
+Evolución del valor del portafolio vs benchmark a lo largo del tiempo.
+
+**Max Sharpe Strategy:**
+![Cumulative Returns Max Sharpe](images/Cumulative%20Returns%20Max%20Sharpe%20Strategy%20vs%20S&P500.png)
+
+**Min Variance Strategy:**
+![Cumulative Returns Min Variance](images/Cumulative%20Returns%20Min%20Variance%20Strategy.png)
+
+**Risk Parity Strategy:**
+![Cumulative Returns Risk Parity](images/Cumulative%20Returns%20Risk%20Parity%20Strategy.png)
+
+#### Drawdown Analysis - Gestión de Riesgo
+Análisis "underwater" mostrando pérdidas máximas desde picos históricos.
+
+**Max Sharpe Strategy:**
+![Drawdown Max Sharpe](images/Drawdowns%20Analysis%20Max%20Sharpe%20Strategy.png)
+
+**Min Variance Strategy:**
+![Drawdown Min Variance](images/Drawdowns%20Analysis%20Min%20Variance.png)
+
+**Risk Parity Strategy:**
+![Drawdown Risk Parity](images/Drawdowns%20Analysis%20Risk%20Parity.png)
+
+#### Rolling Sharpe Ratio - Estabilidad de Performance
+Sharpe ratio móvil de 12 meses para evaluar consistencia de la estrategia.
+
+**Max Sharpe Strategy:**
+![Rolling Sharpe Max Sharpe](images/12%20month%20Rolling%20Sharpe%20Ratio.png)
+
+**Min Variance Strategy:**
+![Rolling Sharpe Min Variance](images/12%20month%20Rolling%20Sharpe%20Ratio%20Min%20Variance%20Strategy.png)
+
+**Risk Parity Strategy:**
+![Rolling Sharpe Risk Parity](images/12%20month%20Rolling%20Sharpe%20Ratio%20Risk%20Parity%20Strategy.png)
+
+### 🔍 Prioridad 2: Análisis Integral
+
+#### Portfolio Composition - Distribución de Activos
+Composición actual de cada estrategia con métricas de concentración.
+
+**Max Sharpe Strategy:**
+![Portfolio Composition Max Sharpe](images/Portfolio%20Composition%20Max%20Sharpe%20Strategy.png)
+
+**Min Variance Strategy:**
+![Portfolio Composition Min Variance](images/Portfolio%20Composition%20Min%20Variance%20strategy.png)
+
+**Risk Parity Strategy:**
+![Portfolio Composition Risk Parity](images/Portfolio%20Composition%20Risk%20Parity.png)
+
+#### Monthly Returns Heatmap - Análisis de Estacionalidad
+Patrones mensuales de retornos para identificar estacionalidad y consistencia.
+
+**Max Sharpe Strategy:**
+![Monthly Heatmap Max Sharpe](images/Monthly%20returns%20Heatmap%20Sharpe%20Strategy.png)
+
+**Min Variance Strategy:**
+![Monthly Heatmap Min Variance](images/Monthly%20returns%20Heatmap%20Min%20Variance%20Strategy.png)
+
+**Risk Parity Strategy:**
+![Monthly Heatmap Risk Parity](images/Monthly%20returns%20Heatmap%20Risk%20Parity%20Strategy.png)
+
+#### Risk-Return Analysis - Frontera Eficiente
+Análisis comparativo de todas las estrategias en el espacio riesgo-retorno.
+
+![Risk Return Analysis](images/Risk%20Return%20Analysis.png)
+
+#### Turnover Analysis - Impacto de Costos de Transacción
+Análisis del impacto de costos operacionales en el performance neto.
+
+![Turnover Analysis](images/Annual%20Turnover%20and%20Impact%20of%20transactions%20costs.png)
+
+---
+
+### 📈 Interpretación de Resultados
+
+#### Performance Destacada
+- **Max Sharpe Strategy**: Mejor ratio riesgo-retorno (126.21% vs 76.42% del S&P 500)
+- **Risk Parity Strategy**: Menor drawdown máximo (-17.82%)
+- **Min Variance Strategy**: Mayor estabilidad con menor volatilidad
+
+#### Insights Clave
+1. **Outperformance Consistente**: Todas las estrategias superan al benchmark
+2. **Gestión de Riesgo**: Drawdowns controlados vs mercado general
+3. **Eficiencia Operacional**: Costos de transacción manejables (~0.22% anual)
+4. **Diversificación**: Portafolios bien balanceados sin concentración excesiva
 
 ---
 
