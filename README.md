@@ -598,10 +598,6 @@ CAGR_real                = (1 + CAGR) / (1 + inflation) - 1
 
 ---
 
-## License
-
-MIT License. See LICENSE file for details.
-
 ## Disclaimer
 
 This project is developed for research and educational purposes. It does not
