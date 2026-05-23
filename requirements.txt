@@ -1,0 +1,22 @@
+# Equity Portfolio Optimizer
+# Python >= 3.9 required
+#
+# Install:  pip install -r requirements.txt
+
+# Data
+yfinance>=0.2.36
+
+# Numerical computation
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Data manipulation
+pandas>=2.0.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.2
+
+# Optional: Jupyter environment
+# jupyter>=1.0.0
+# ipykernel>=6.0.0

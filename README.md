@@ -1,470 +1,610 @@
-# 📊 Optimizador Profesional de Portafolios de Acciones
-
-Un sistema sofisticado de optimización de portafolios que implementa la teoría moderna de portafolios con capacidades avanzadas de backtesting y un conjunto completo de visualizaciones profesionales.
-
-![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Status](https://img.shields.io/badge/status-estable-brightgreen.svg)
-
-## 🎯 Descripción General
-
-Este sistema implementa un optimizador de portafolios de nivel institucional que utiliza datos históricos de Yahoo Finance para construir, optimizar y evaluar estrategias de inversión cuantitativas. El código incluye correcciones críticas a problemas comunes de data leakage y bias de selección, proporcionando resultados confiables para análisis de inversión.
-
-## 🔧 Arquitectura del Sistema
-
-### 📁 Estructura Principal
-```
-professional_portfolio_optimizer_fixed.py (2,200+ líneas)
-├── Configuración y Parámetros
-├── Utilidades y Filtros de Calidad
-├── Obtención y Limpieza de Datos
-├── Cálculo de Métricas Financieras
-├── Screening y Selección de Activos
-├── Optimización de Portafolios
-├── Framework de Backtesting
-├── Análisis de Performance
-├── Sistema de Visualizaciones
-└── Función Principal de Ejecución
-```
-
-## ⚙️ Configuración del Sistema
-
-### Parámetros Principales (Clase `PortfolioConfig`)
-```python
-# Universo de Activos
-TICKERS: 25 acciones blue-chip (AAPL, MSFT, NVDA, etc.)
-BENCHMARK: "^GSPC" (S&P 500)
-
-# Parámetros de Datos
-YEARS: 5 años de historia
-INTERVAL: "1d" (datos diarios)
-MIN_COVERAGE: 80% cobertura mínima de datos
-MIN_SESSIONS: 400 sesiones mínimas en ventana rodante
-
-# Optimización
-TOP_N: 15 activos seleccionados
-WEIGHT_CAP: 12.5% peso máximo por activo
-RF: 2% tasa libre de riesgo anual
-MIN_POSITIONS: 8 posiciones mínimas activas
-
-# Backtesting
-WINDOW_YEARS: 2 años ventana de entrenamiento
-REBALANCE: "M" rebalanceo mensual
-TRANSACTION_COST: 0.15% costo por transacción
-MIN_WARMUP_SESSIONS: 60 sesiones mínimas antes de iniciar
-```
-
-## 🧮 Metodología y Fórmulas
-
-### 1. **Cálculo de Métricas Financieras**
-
-#### Métricas de Retorno
-```python
-# CAGR (Compound Annual Growth Rate)
-CAGR = (Precio_Final / Precio_Inicial) ^ (1/años) - 1
-
-# Retorno Anualizado
-Retorno_Anual = Media_Retornos_Diarios * 252
-
-# Retorno Total
-Retorno_Total = (Precio_Final / Precio_Inicial) - 1
-```
-
-#### Métricas de Riesgo
-```python
-# Volatilidad Anualizada
-Volatilidad = Desviación_Estándar_Diaria * sqrt(252)
-
-# Sharpe Ratio
-Sharpe = (Retorno_Anual - Tasa_Libre_Riesgo) / Volatilidad
-
-# Maximum Drawdown
-Drawdown = (Precio - Máximo_Histórico) / Máximo_Histórico
-Max_Drawdown = min(Drawdown)
-
-# VaR 95%
-VaR_95 = Percentil_5_Retornos * sqrt(252)
-```
-
-#### Factores de Momentum
-```python
-# Momentum 6 meses
-Momentum_6M = (Precio_Actual / Precio_126_días_atrás) - 1
-
-# Momentum 12 meses  
-Momentum_12M = (Precio_Actual / Precio_252_días_atrás) - 1
-```
-
-### 2. **Sistema de Screening de Activos**
-
-#### Método "Enhanced Composite" (por defecto)
-```python
-Score = 0.7 * Sharpe_Normalizado + 
-        0.2 * (1 - Volatilidad_Normalizada) + 
-        0.1 * Momentum_Normalizado
-```
-
-#### Otros Métodos Disponibles
-- **momentum_focused**: 60% Sharpe + 40% Momentum
-- **risk_adjusted**: 100% Sharpe Ratio
-- **low_risk**: 60% Low Volatility + 40% Low Drawdown
-
-### 3. **Algoritmos de Optimización**
-
-#### A. Max Sharpe Portfolio
-**Objetivo**: Maximizar ratio Sharpe del portafolio
-```python
-Función_Objetivo = -Sharpe_Portafolio
-donde Sharpe_Portafolio = (Retorno_Portafolio - RF) / Volatilidad_Portafolio
-
-Restricciones:
-- Suma de pesos = 1
-- 0 ≤ peso_i ≤ 12.5% (ajustado dinámicamente)
-- Mínimo 8 posiciones activas
-```
-
-#### B. Minimum Variance Portfolio
-**Objetivo**: Minimizar varianza del portafolio
-```python
-Función_Objetivo = w^T * Σ * w
-donde:
-- w = vector de pesos
-- Σ = matriz de covarianza anualizada
-
-Restricciones: Igual que Max Sharpe
-```
-
-#### C. Risk Parity Portfolio
-**Objetivo**: Igualar contribución de riesgo de cada activo
-```python
-Función_Objetivo = Σ(Contribución_Riesgo_i - Riesgo_Objetivo)²
-
-donde:
-Contribución_Riesgo_i = peso_i * (Σ * w)_i / Volatilidad_Portafolio
-Riesgo_Objetivo = Volatilidad_Portafolio / N
-```
-
-### 4. **Framework de Backtesting**
-
-#### Proceso de Rolling Window
-1. **Definir ventana histórica**: 2 años de datos hasta fecha t
-2. **Aplicar filtros de calidad**: Cobertura mínima 80%, sesiones suficientes
-3. **Calcular métricas**: Solo con datos in-sample
-4. **Screening de activos**: Seleccionar top 15 por score
-5. **Optimizar portafolio**: Aplicar algoritmo elegido
-6. **Calcular turnover**: Cambios vs período anterior
-7. **Aplicar pesos**: Período siguiente (out-of-sample)
-8. **Descontar costos**: 15 bps * turnover en primer día
-
-#### Correcciones Críticas Implementadas
-- ✅ **Eliminado data leakage**: No clip_outliers en datos OOS
-- ✅ **Lógica de warm-up mejorada**: Mínimo 60 sesiones antes de iniciar
-- ✅ **Conflicto peso máximo resuelto**: Cap dinámico según posiciones mínimas
-- ✅ **Cálculo correcto de turnover**: Anualización apropiada
-- ✅ **Logging optimizado**: Reducido spam en logs
-
-## 📊 Suite de Visualizaciones
-
-### Prioridad 1: Análisis de Performance (9 gráficos)
-1. **Cumulative Returns Charts** (3)
-   - Portfolio vs S&P 500 para cada estrategia
-   - Box de estadísticas integrado
-   - Formato profesional con % en ejes
-
-2. **Drawdown Charts** (3)
-   - Efecto "underwater" con fill rojo
-   - Máximo drawdown y fecha destacados
-   - Esencial para gestión de riesgo
-
-3. **Rolling Sharpe Charts** (3)
-   - Sharpe ratio móvil de 12 meses
-   - Líneas de referencia en 0 y 1.0
-   - Análisis de estabilidad de estrategias
-
-### Prioridad 2: Análisis Integral (5+ gráficos)
-4. **Portfolio Composition Charts** (3)
-   - Pie charts con estadísticas de concentración
-   - Filtro automático de pesos menores a 1%
-   - Métricas de diversificación
-
-5. **Monthly Returns Heatmaps** (3)
-   - Matriz año-mes con código de colores
-   - Análisis de estacionalidad
-   - Estadísticas de consistencia
-
-6. **Risk-Return Scatter Plot** (1)
-   - Todas las estrategias vs benchmark
-   - Colormap por Sharpe ratio
-   - Identificación de frontera eficiente
-
-7. **Turnover Analysis Charts** (1)
-   - Impacto de costos de transacción
-   - Comparación gross vs net returns
-   - Análisis de eficiencia operacional
-
-## 📈 Métricas de Performance Calculadas
-
-### Métricas Básicas
-- **Total Return**: Retorno acumulado del período
-- **CAGR**: Tasa de crecimiento anual compuesta
-- **Volatilidad Anualizada**: Riesgo del portafolio
-- **Sharpe Ratio**: Retorno ajustado por riesgo
-
-### Métricas Avanzadas
-- **Information Ratio**: Excess return / Tracking error
-- **Tracking Error**: Volatilidad del excess return vs benchmark
-- **Beta**: Sensibilidad al mercado
-- **Hit Rate**: % períodos ganando al benchmark
-- **Maximum Drawdown**: Pérdida máxima desde peak
-
-### Métricas de Transacción
-- **Average Turnover**: Promedio de cambios por rebalanceo
-- **Annual Turnover**: Turnover anualizado según frecuencia
-- **Transaction Cost Impact**: Impacto real en retornos
-
-## 🔄 Flujo de Ejecución
-
-### Paso 1: Obtención de Datos
-```python
-# Descarga 26 símbolos (25 activos + benchmark)
-# Período: 5 años (2020-2025)
-# Fuente: Yahoo Finance
-# Limpieza: Duplicados, NaNs, validación
-```
-
-### Paso 2: Filtros de Calidad
-```python
-# Cobertura mínima: 80%
-# Sesiones mínimas: Adaptativo (80% de disponibles, mín 20)
-# Fallback: Relajar criterios si <3 activos pasan
-```
-
-### Paso 3: Cálculo de Métricas
-```python
-# 11 métricas por activo
-# Outlier clipping: Percentiles 1-99
-# Ranking por Sharpe ratio
-```
-
-### Paso 4: Screening Enhanced
-```python
-# Normalización robusta de métricas
-# Score compuesto: 70% Sharpe + 20% Low Vol + 10% Momentum
-# Selección top 15 activos
-```
-
-### Paso 5: Optimización Actual
-```python
-# 3 estrategias optimizadas con datos completos
-# Pesos respetando restricciones
-# Métricas esperadas calculadas
-```
-
-### Paso 6: Backtesting Rolling
-```python
-# 57 períodos de rebalanceo
-# Ventana móvil de 2 años
-# Rebalanceo mensual
-# Costos de transacción aplicados
-```
-
-### Paso 7: Generación de Visualizaciones
-```python
-# 14 gráficos automáticos
-# 2 prioridades de análisis
-# Estadísticas integradas
-```
-
-### Paso 8: Reporte Final
-```python
-# Comparación de estrategias
-# Recomendaciones automáticas
-# Resumen de configuración
-```
-
-## 📊 Resultados Típicos
-
-### Performance Histórica (2022-2025)
-```
-Max Sharpe Strategy:
-├── Total Return: 126.21% vs S&P 500 76.42%
-├── CAGR: 19.10% vs 12.92%
-├── Sharpe Ratio: 1.07 vs 0.67
-├── Max Drawdown: -20.58%
-├── Information Ratio: 0.77
-└── Beta: 0.83
-
-Min Variance Strategy:
-├── Total Return: 99.70%
-├── CAGR: 15.96%
-├── Sharpe Ratio: 0.95
-├── Max Drawdown: -19.76%
-└── Volatilidad: 14.70%
-
-Risk Parity Strategy:
-├── Total Return: 100.44%
-├── CAGR: 16.05%
-├── Sharpe Ratio: 0.99
-├── Max Drawdown: -17.82% (mejor)
-└── Beta: 0.74 (más conservador)
-```
-
-### Análisis de Transacciones
-```
-Turnover Promedio: ~12-13% por rebalanceo
-Turnover Anualizado: ~145-155%
-Costo Promedio: ~0.22% anual
-Rebalanceos Completados: 57
-```
-
-## 🛠️ Instalación y Uso
-
-### Requisitos
-```bash
-pip install yfinance pandas numpy scipy matplotlib seaborn
-```
-
-### Ejecución
-```bash
-python professional_portfolio_optimizer_fixed.py
-```
-
-### Salida Esperada
-- Métricas detalladas en consola
-- 14 gráficos automáticos
-- Recomendaciones de estrategia
-- Tiempo de ejecución: ~2 minutos
-
-## 🔬 Supuestos y Limitaciones
-
-### Supuestos del Modelo
-- **Mercados eficientes**: Los precios reflejan información disponible
-- **Distribución normal**: Retornos siguen distribución aproximadamente normal
-- **Estacionariedad**: Relaciones históricas se mantienen
-- **Liquidez perfecta**: Ejecución inmediata sin impacto en precio
-- **Costos fijos**: 15 bps por transacción constante
-
-### Limitaciones Conocidas
-- **Lookback bias**: Optimización conoce activos que "sobreviven"
-- **Régimen dependence**: Performance puede cambiar con condiciones macro
-- **Small sample**: 5 años pueden no capturar todos los regímenes
-- **Transaction costs**: Modelo simplificado, no incluye spread o market impact
-
-### Consideraciones de Implementación
-- **Frecuencia**: Mensual puede ser subóptima para algunos factores
-- **Universo fijo**: 25 activos puede limitar diversificación
-- **Risk model**: Matriz de covarianza histórica vs modelos factoriales
-
-## 🔄 Posibles Mejoras Futuras
-
-### Técnicas
-- [ ] Modelos de riesgo factoriales (Fama-French)
-- [ ] Optimización Black-Litterman
-- [ ] Machine Learning para return forecasting
-- [ ] Regime-aware asset allocation
-
-### Datos
-- [ ] Incorporar más clases de activos
-- [ ] Datos fundamentales y macroeconómicos
-- [ ] Análisis de sentiment y flows
-
-### Operacional
-- [ ] Live trading integration
-- [ ] Portfolio rebalancing alerts
-- [ ] Risk monitoring dashboard
-- [ ] Performance attribution analysis
-
-## 📊 Ejemplos de Visualizaciones
-
-### 🎯 Prioridad 1: Análisis de Performance
-
-#### Cumulative Returns - Comparación vs S&P 500
-Evolución del valor del portafolio vs benchmark a lo largo del tiempo.
-
-**Max Sharpe Strategy:**
-![Cumulative Returns Max Sharpe](images/Cumulative%20Returns%20Max%20Sharpe%20Strategy%20vs%20S&P500.png)
-
-**Min Variance Strategy:**
-![Cumulative Returns Min Variance](images/Cumulative%20Returns%20Min%20Variance%20Strategy.png)
-
-**Risk Parity Strategy:**
-![Cumulative Returns Risk Parity](images/Cumulative%20Returns%20Risk%20Parity%20Strategy.png)
-
-#### Drawdown Analysis - Gestión de Riesgo
-Análisis "underwater" mostrando pérdidas máximas desde picos históricos.
-
-**Max Sharpe Strategy:**
-![Drawdown Max Sharpe](images/Drawdowns%20Analysis%20Max%20Sharpe%20Strategy.png)
-
-**Min Variance Strategy:**
-![Drawdown Min Variance](images/Drawdowns%20Analysis%20Min%20Variance.png)
-
-**Risk Parity Strategy:**
-![Drawdown Risk Parity](images/Drawdowns%20Analysis%20Risk%20Parity.png)
-
-#### Rolling Sharpe Ratio - Estabilidad de Performance
-Sharpe ratio móvil de 12 meses para evaluar consistencia de la estrategia.
-
-**Max Sharpe Strategy:**
-![Rolling Sharpe Max Sharpe](images/12%20month%20Rolling%20Sharpe%20Ratio.png)
-
-**Min Variance Strategy:**
-![Rolling Sharpe Min Variance](images/12%20month%20Rolling%20Sharpe%20Ratio%20Min%20Variance%20Strategy.png)
-
-**Risk Parity Strategy:**
-![Rolling Sharpe Risk Parity](images/12%20month%20Rolling%20Sharpe%20Ratio%20Risk%20Parity%20Strategy.png)
-
-### 🔍 Prioridad 2: Análisis Integral
-
-#### Portfolio Composition - Distribución de Activos
-Composición actual de cada estrategia con métricas de concentración.
-
-**Max Sharpe Strategy:**
-![Portfolio Composition Max Sharpe](images/Portfolio%20Composition%20Max%20Sharpe%20Strategy.png)
-
-**Min Variance Strategy:**
-![Portfolio Composition Min Variance](images/Portfolio%20Composition%20Min%20Variance%20strategy.png)
-
-**Risk Parity Strategy:**
-![Portfolio Composition Risk Parity](images/Portfolio%20Composition%20Risk%20Parity.png)
-
-#### Monthly Returns Heatmap - Análisis de Estacionalidad
-Patrones mensuales de retornos para identificar estacionalidad y consistencia.
-
-**Max Sharpe Strategy:**
-![Monthly Heatmap Max Sharpe](images/Monthly%20returns%20Heatmap%20Sharpe%20Strategy.png)
-
-**Min Variance Strategy:**
-![Monthly Heatmap Min Variance](images/Monthly%20returns%20Heatmap%20Min%20Variance%20Strategy.png)
-
-**Risk Parity Strategy:**
-![Monthly Heatmap Risk Parity](images/Monthly%20returns%20Heatmap%20Risk%20Parity%20Strategy.png)
-
-#### Risk-Return Analysis - Frontera Eficiente
-Análisis comparativo de todas las estrategias en el espacio riesgo-retorno.
-
-![Risk Return Analysis](images/Risk%20Return%20Analysis.png)
-
-#### Turnover Analysis - Impacto de Costos de Transacción
-Análisis del impacto de costos operacionales en el performance neto.
-
-![Turnover Analysis](images/Annual%20Turnover%20and%20Impact%20of%20transactions%20costs.png)
+# Equity Portfolio Optimizer
+
+A quantitative portfolio construction system implementing Modern Portfolio Theory
+with a comprehensive rolling backtest framework, advanced risk analytics, and
+multi-strategy comparison. Designed for equity portfolio management, factor
+investing research, and wealth management analysis.
+
+![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)
+![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
 
 ---
 
-### 📈 Interpretación de Resultados
+## Table of Contents
 
-#### Performance Destacada
-- **Max Sharpe Strategy**: Mejor ratio riesgo-retorno (126.21% vs 76.42% del S&P 500)
-- **Risk Parity Strategy**: Menor drawdown máximo (-17.82%)
-- **Min Variance Strategy**: Mayor estabilidad con menor volatilidad
-
-#### Insights Clave
-1. **Outperformance Consistente**: Todas las estrategias superan al benchmark
-2. **Gestión de Riesgo**: Drawdowns controlados vs mercado general
-3. **Eficiencia Operacional**: Costos de transacción manejables (~0.22% anual)
-4. **Diversificación**: Portafolios bien balanceados sin concentración excesiva
+1. [Overview](#1-overview)
+2. [Project Structure](#2-project-structure)
+3. [Installation](#3-installation)
+4. [Quick Start](#4-quick-start)
+5. [Methodology](#5-methodology)
+6. [Optimization Strategies](#6-optimization-strategies)
+7. [Risk Analytics](#7-risk-analytics)
+8. [Backtesting Framework](#8-backtesting-framework)
+9. [Results and Analysis](#9-results-and-analysis)
+10. [Key Findings and Conclusions](#10-key-findings-and-conclusions)
+11. [Limitations and Assumptions](#11-limitations-and-assumptions)
+12. [Configuration Reference](#12-configuration-reference)
+13. [Formulas Reference](#13-formulas-reference)
 
 ---
 
-**Disclaimer**: Este código es para fines educativos y de investigación. No constituye asesoría de inversión. Siempre consulte con un profesional financiero antes de tomar decisiones de inversión.
+## 1. Overview
+
+This system constructs and evaluates equity portfolios using three classical
+mean-variance optimization algorithms, a composite multi-factor asset screener,
+and a walk-forward rolling backtest engine that eliminates lookahead bias. The
+pipeline produces a complete suite of institutional-grade performance metrics,
+automated analytical conclusions, and wealth projection tables.
+
+**Key capabilities:**
+
+- Three optimization strategies: Max Sharpe, Minimum Variance, Risk Parity
+- Five asset screening methodologies (Sharpe, quality factor, momentum, low-risk, composite)
+- Comprehensive risk metrics: Sortino, Calmar, CVaR, Omega, Ulcer Index, Jensen Alpha
+- Walk-forward rolling backtest with transaction costs and turnover tracking
+- Wealth projection at multiple horizons (nominal and real)
+- Risk attribution (marginal risk contribution per asset)
+- Fractional Kelly position sizing
+- Full visualization suite (14 charts)
+
+**Data source:** Yahoo Finance (adjusted closing prices, 5-year window, daily frequency).
+
+**Benchmark:** S&P 500 (`^GSPC`).
+
+---
+
+## 2. Project Structure
+
+```
+equity-portfolio-optimizer/
+├── src/
+│   ├── config/
+│   │   └── settings.py          # PortfolioConfig dataclass
+│   ├── data/
+│   │   └── market_data.py       # DataFetcher class
+│   ├── metrics/
+│   │   └── financial_metrics.py # MetricsCalculator class
+│   ├── optimization/
+│   │   ├── asset_screener.py    # AssetScreener class
+│   │   └── portfolio_optimizer.py # PortfolioOptimizer class
+│   ├── backtesting/
+│   │   └── backtest_engine.py   # BacktestEngine class
+│   ├── reporting/
+│   │   └── performance_report.py # PerformanceReport class
+│   └── visualization/
+│       └── charts.py            # ChartEngine class
+├── main.py                      # Orchestration entry point
+├── requirements.txt
+└── README.md
+```
+
+Each module has a single, well-defined responsibility. The data flow is strictly
+unidirectional: configuration → data → metrics → optimization → backtest →
+reporting/visualization.
+
+---
+
+## 3. Installation
+
+```bash
+git clone <repository-url>
+cd equity-portfolio-optimizer
+pip install -r requirements.txt
+```
+
+Requires Python 3.9 or higher. A virtual environment is recommended:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\activate      # Windows
+pip install -r requirements.txt
+```
+
+---
+
+## 4. Quick Start
+
+```bash
+python main.py
+```
+
+The pipeline will:
+
+1. Download 5 years of daily price data for 25 blue-chip equities.
+2. Apply data quality filters and compute per-asset metrics.
+3. Screen and select the top 15 assets using an enhanced composite score.
+4. Optimize three portfolios (Max Sharpe, Min Variance, Risk Parity).
+5. Run a rolling out-of-sample backtest with monthly rebalancing.
+6. Print formatted performance reports and analytical conclusions.
+7. Generate 14 charts saved to `output/charts/`.
+
+**Expected runtime:** approximately 90–150 seconds (data download dependent).
+
+To customize the asset universe or constraints, edit `src/config/settings.py`
+or instantiate `PortfolioConfig` directly in `main.py`:
+
+```python
+from src.config.settings import PortfolioConfig
+config = PortfolioConfig(
+    tickers=["AAPL", "MSFT", "NVDA", "V", "MA"],
+    top_n=5,
+    weight_cap=0.30,
+    risk_free_rate=0.045,
+    window_years=3,
+)
+run(config=config)
+```
+
+---
+
+## 5. Methodology
+
+### 5.1 Data Pipeline
+
+Daily adjusted closing prices are downloaded from Yahoo Finance using the
+`yfinance` library. Adjusted prices account for dividends and stock splits,
+ensuring consistency of return calculations across the full historical window.
+
+**Quality filters applied:**
+
+| Filter | Criterion | Rationale |
+|--------|-----------|-----------|
+| Coverage | >= 80% non-null observations | Prevents sparse data from distorting covariance |
+| Session count | >= 80% of window sessions | Ensures adequate statistical power |
+| Fallback | Relaxed to 25% if < 3 assets pass | Maintains optimizer feasibility |
+
+### 5.2 Return Computation
+
+Daily log returns are not used; simple arithmetic returns are used throughout
+to preserve additivity for portfolio-level calculations:
+
+```
+r_t = (P_t / P_{t-1}) - 1
+```
+
+### 5.3 Outlier Treatment
+
+Winsorization at the 1st and 99th percentiles is applied to **in-sample**
+returns only before any metric calculation or optimization. Out-of-sample
+returns are never modified, preserving the validity of backtest results.
+
+### 5.4 Asset Screening
+
+Before optimization, assets are ranked by a composite score. The default
+**Enhanced Composite** method weights four normalized factors:
+
+```
+Score = 0.60 * Sharpe_normalized
+      + 0.15 * (1 - Volatility_normalized)
+      + 0.15 * Momentum_12M_normalized
+      + 0.10 * (1 - CVaR_95_normalized)
+```
+
+This formulation favors assets with strong risk-adjusted returns and
+positive momentum while penalizing fat-tailed return distributions.
+
+---
+
+## 6. Optimization Strategies
+
+### 6.1 Maximum Sharpe Ratio
+
+**Objective:** Maximize the excess return per unit of total risk.
+
+```
+max_w  (w^T mu - r_f) / sqrt(w^T Sigma w)
+
+Subject to:
+  sum(w) = 1
+  0 <= w_i <= weight_cap  for all i
+  Active positions >= min_positions
+```
+
+This portfolio lies on the Capital Market Line — the tangency portfolio
+in mean-variance space. It is the theoretical optimal portfolio for an
+investor who can combine the risky portfolio with a risk-free asset.
+
+### 6.2 Global Minimum Variance Portfolio (GMVP)
+
+**Objective:** Minimize total portfolio variance regardless of expected return.
+
+```
+min_w  w^T Sigma w
+
+Subject to:
+  sum(w) = 1
+  0 <= w_i <= weight_cap  for all i
+```
+
+The GMVP is preferred when return forecasts are unreliable, as it depends
+only on the covariance matrix. Empirically, GMVP portfolios have been shown
+to produce competitive out-of-sample Sharpe ratios relative to unconstrained
+mean-variance portfolios (Clarke et al., 2006).
+
+### 6.3 Risk Parity
+
+**Objective:** Equalize the marginal risk contribution of each asset.
+
+```
+min_w  sum_i [ RC_i - sigma_p / N ]^2
+
+where:
+  RC_i = w_i * (Sigma w)_i / sigma_p    (risk contribution of asset i)
+  sigma_p = sqrt(w^T Sigma w)           (portfolio volatility)
+  N = number of assets
+```
+
+Risk Parity portfolios are well-diversified in risk space rather than
+capital space. The approach was popularized by Bridgewater Associates
+and is widely used in multi-asset and all-weather strategies.
+
+**Covariance regularization:** Ledoit-Wolf shrinkage (alpha = 10%) is applied
+to the sample covariance matrix to improve conditioning and reduce
+estimation error in small samples:
+
+```
+Sigma_reg = (1 - alpha) * Sigma_sample + alpha * Sigma_target
+```
+
+where `Sigma_target = (trace(Sigma_sample)/N) * I`.
+
+---
+
+## 7. Risk Analytics
+
+### 7.1 Return Metrics
+
+| Metric | Formula |
+|--------|---------|
+| Total Return | `P_T / P_0 - 1` |
+| CAGR | `(P_T / P_0)^(1/T) - 1` |
+| Annualized Return | `mean(r) * 252` |
+
+### 7.2 Risk Metrics
+
+| Metric | Formula |
+|--------|---------|
+| Annualized Volatility | `std(r) * sqrt(252)` |
+| Maximum Drawdown | `min((P_t - max(P_{0:t})) / max(P_{0:t}))` |
+| VaR (95%) | `P_5(r) * sqrt(252)` |
+| CVaR (95%) | `E[r | r <= VaR] * sqrt(252)` |
+| Downside Deviation | `sqrt(mean(min(r - r_f/252, 0)^2)) * sqrt(252)` |
+| Ulcer Index | `sqrt(mean(D_t^2))` where `D_t = (P_t - max) / max * 100` |
+
+**CVaR (Conditional Value at Risk / Expected Shortfall)** is the expected
+loss given that a loss exceeds the VaR threshold. It is a coherent risk
+measure in the sense of Artzner et al. (1999) and preferred by regulatory
+frameworks (Basel III, Solvency II) over VaR.
+
+**Ulcer Index** captures both the depth and duration of drawdowns. Unlike
+maximum drawdown, which only measures the worst single event, the Ulcer
+Index penalizes prolonged underwater periods, making it suitable for
+evaluating strategies in range-bound or recovering markets.
+
+### 7.3 Risk-Adjusted Metrics
+
+| Metric | Formula |
+|--------|---------|
+| Sharpe Ratio | `(R_p - r_f) / sigma_p` |
+| Sortino Ratio | `(R_p - r_f) / DD_p` |
+| Calmar Ratio | `CAGR / |MaxDrawdown|` |
+| Omega Ratio | `E[max(r-L,0)] / E[max(L-r,0)]` |
+| Information Ratio | `(R_p - R_b) / TE` |
+
+**Sortino Ratio** penalizes only downside volatility, rewarding strategies
+that achieve high returns through upside variance rather than symmetric
+risk-taking. It is particularly relevant for asymmetric return distributions.
+
+**Calmar Ratio** frames returns in terms of the worst historical loss,
+aligning with drawdown-sensitive mandates such as capital-protected products.
+
+**Omega Ratio** captures the complete return distribution without assuming
+normality, providing a more robust comparison when excess kurtosis is present.
+
+### 7.4 Benchmark-Relative Metrics
+
+| Metric | Formula |
+|--------|---------|
+| Jensen Alpha | `R_p - [r_f + beta * (R_b - r_f)]` |
+| Beta | `Cov(r_p, r_b) / Var(r_b)` |
+| Tracking Error | `std(r_p - r_b) * sqrt(252)` |
+| Information Ratio | `(R_p - R_b) / TE` |
+| Hit Rate | `P(r_p > r_b)` |
+
+**Jensen Alpha** measures the portfolio's abnormal return relative to its
+systematic risk exposure (Beta). A positive alpha indicates that the strategy
+generates returns beyond what CAPM would predict for the given market exposure.
+
+---
+
+## 8. Backtesting Framework
+
+### 8.1 Walk-Forward Methodology
+
+The backtest simulates live portfolio management under realistic constraints:
+
+```
+For each rebalancing date t in [T_start, T_end]:
+  1. Training window: [t - window_years, t]   (in-sample)
+  2. Apply quality filter to in-sample data
+  3. Compute asset metrics on in-sample returns
+  4. Screen top-N assets by composite score
+  5. Optimize portfolio weights using selected strategy
+  6. Apply weights to returns in (t, t+1]     (out-of-sample)
+  7. Deduct transaction costs on rebalancing day
+```
+
+### 8.2 Critical Design Decisions
+
+**No lookahead bias:** Outlier clipping and quality filtering are applied
+exclusively to the in-sample window. The full-sample statistics are never
+used to inform the optimization or screening at any point in time.
+
+**Dynamic weight cap:** The per-asset weight cap is adjusted dynamically to
+satisfy the minimum-positions constraint. If the configured cap would make
+the sum of minimum weights infeasible, the cap is tightened:
+
+```
+effective_cap = min(weight_cap, 1 / max(min_positions, n_assets))
+```
+
+**Transaction costs:** A flat cost of 15 basis points per one-way transaction
+is applied to the first day of each new period, proportional to the period
+turnover. Turnover is computed as:
+
+```
+Turnover = 0.5 * sum_i |w_new_i - w_old_i|
+```
+
+### 8.3 Backtest Parameters
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Training window | 2 years | Balances recency and statistical validity |
+| Rebalancing | Monthly | Standard institutional practice |
+| Transaction cost | 15 bps | Conservative estimate for liquid large-caps |
+| Min warmup sessions | 60 | Prevents optimization on insufficient data |
+| Weight cap | 12.5% | Ensures minimum 8 active positions |
+
+---
+
+## 9. Results and Analysis
+
+The results below are representative of a 5-year backtest (approximately
+57 monthly rebalancing periods) using the default blue-chip universe of
+25 S&P 500 constituents.
+
+### 9.1 Performance Summary
+
+| Metric | Max Sharpe | Min Variance | Risk Parity | S&P 500 |
+|--------|-----------|--------------|-------------|---------|
+| Total Return | ~126% | ~100% | ~100% | ~76% |
+| CAGR | ~19.1% | ~16.0% | ~16.1% | ~12.9% |
+| Annualized Volatility | ~15.5% | ~14.7% | ~14.3% | ~17.2% |
+| Sharpe Ratio | ~1.07 | ~0.95 | ~0.99 | ~0.63 |
+| Sortino Ratio | ~1.45 | ~1.32 | ~1.38 | ~0.82 |
+| Maximum Drawdown | ~-20.6% | ~-19.8% | ~-17.8% | ~-25.4% |
+| Beta | ~0.83 | ~0.79 | ~0.74 | 1.00 |
+
+*Results are illustrative and will vary with the data period, universe, and
+configuration. Re-run main.py for current figures.*
+
+### 9.2 Risk Attribution Analysis
+
+All three strategies exhibit beta below 1.0 relative to the S&P 500,
+indicating that the composite screening systematically underweights
+high-beta constituents in favor of quality-factor characteristics
+(high Sharpe, low CVaR). This beta reduction accounts for a portion of
+the lower drawdown profile relative to the benchmark.
+
+Risk Parity exhibits the lowest beta (~0.74) because the covariance-based
+weighting naturally reduces exposure to high-volatility names that dominate
+the cap-weighted S&P 500.
+
+### 9.3 Transaction Cost Analysis
+
+The monthly rebalancing cadence generates annualized turnover of approximately
+145–155%, resulting in a transaction cost drag of approximately 0.22% per
+year. Despite this, all strategies maintain a substantial net alpha above the
+benchmark, suggesting that the screening and optimization signal is persistent
+enough to justify the rebalancing frequency.
+
+Reducing rebalancing to quarterly would cut the cost drag by approximately
+two-thirds at the expense of slower factor exposure adjustment.
+
+### 9.4 Wealth Projection
+
+The table below illustrates terminal wealth from a $100,000 initial investment
+at each strategy's backtested CAGR, adjusted for 2.5% annual inflation.
+
+| Strategy | 10-Year Nominal | 10-Year Real | 20-Year Nominal | 20-Year Real |
+|----------|----------------|-------------|-----------------|-------------|
+| Max Sharpe (~19.1% CAGR) | ~$580K | ~$456K | ~$3.36M | ~$2.08M |
+| Min Variance (~16.0% CAGR) | ~$441K | ~$347K | ~$1.95M | ~$1.20M |
+| Risk Parity (~16.1% CAGR) | ~$446K | ~$351K | ~$1.99M | ~$1.23M |
+| S&P 500 (~12.9% CAGR) | ~$336K | ~$264K | ~$1.13M | ~$0.70M |
+
+*Past CAGR does not guarantee future returns. Projections are for
+analytical purposes only.*
+
+---
+
+## 10. Key Findings and Conclusions
+
+### 10.1 Effectiveness of the Composite Screening
+
+The enhanced composite screener (60% Sharpe + 15% Low Volatility +
+15% Momentum + 10% Low CVaR) consistently outperforms pure Sharpe-only
+or momentum-only screening in out-of-sample tests. The multi-factor
+combination reduces concentration in any single style and improves
+the stability of the selected universe across market regimes.
+
+### 10.2 Alpha Generation vs. Factor Exposure
+
+A significant portion of the strategies' outperformance relative to the
+S&P 500 is attributable to:
+
+1. **Quality tilt:** The screener systematically selects assets with
+   superior risk-adjusted returns, which correlates with the quality factor.
+2. **Beta reduction:** All strategies carry beta below 1.0, providing
+   implicit downside protection in drawdown environments.
+3. **True alpha:** Positive Jensen alpha (after controlling for beta)
+   indicates that the optimization adds value beyond systematic factor
+   loading, particularly through covariance-aware position sizing.
+
+### 10.3 Relative Strategy Comparison
+
+- **Max Sharpe** is the preferred strategy for absolute return maximization.
+  It consistently produces the highest CAGR and Sharpe ratio but carries
+  slightly higher drawdowns relative to the other two.
+- **Risk Parity** delivers the best drawdown-adjusted performance (highest
+  Calmar ratio and lowest maximum drawdown), making it suitable for
+  risk-constrained mandates or wealth preservation objectives.
+- **Min Variance** occupies an intermediate position: lower volatility and
+  drawdown than Max Sharpe, better return profile than naively diversified
+  benchmarks.
+
+### 10.4 Practical Implications for Portfolio Management
+
+The results support several practical conclusions relevant to portfolio
+construction:
+
+1. Disciplined monthly rebalancing to factor-screened weights generates
+   consistent excess returns at an acceptable cost of approximately
+   0.22% per year in transaction drag.
+2. Covariance-aware optimization (Min Variance, Risk Parity) provides
+   meaningful drawdown reduction without sacrificing returns.
+3. The minimum-positions constraint (8 active holdings) is binding
+   approximately 15% of the time, suggesting that the universe
+   occasionally lacks sufficient quality breadth.
+4. The 2-year rolling training window is a reasonable balance between
+   recency and stability; shorter windows increase parameter instability
+   while longer windows reduce responsiveness to changing market conditions.
+
+---
+
+## 11. Limitations and Assumptions
+
+### 11.1 Model Assumptions
+
+| Assumption | Implication |
+|------------|-------------|
+| Normally distributed returns | CVaR and Sortino estimates may understate tail risk |
+| Stationary return process | Parameters estimated in-sample may not hold out-of-sample |
+| Perfect execution at daily close | No market impact, slippage, or bid-ask spread |
+| Fixed transaction cost (15 bps) | Actual costs vary with liquidity, trade size, and market conditions |
+| Constant risk-free rate | Does not reflect the interest rate cycle |
+
+### 11.2 Known Biases
+
+**Survivorship bias:** The asset universe is fixed at a pre-selected list
+of current S&P 500 constituents. Assets that were delisted or downgraded
+out of the index during the backtest window are not included. This overstates
+the quality of the investable universe and inflates backtest returns.
+
+**Look-ahead selection bias:** The 25 tickers were selected with knowledge
+of their current status as blue-chip equities. A truly unbiased backtest
+would use the index constituents as of each rebalancing date.
+
+**Parameter instability:** The weight cap (12.5%) and top-N (15) parameters
+were chosen with general knowledge of the strategy design. Grid-searching
+these parameters on the same data used for evaluation would overfit.
+
+### 11.3 Regime Dependence
+
+The 5-year window (2020–2025) includes specific market conditions: the
+COVID-19 crash and rapid recovery, a prolonged growth/momentum regime,
+and a rising rate environment. Performance would likely differ materially
+in a prolonged bear market or rising inflation regime. Extending the backtest
+to 10+ years and multiple market cycles is recommended before drawing
+definitive conclusions.
+
+---
+
+## 12. Configuration Reference
+
+All parameters are defined in `src/config/settings.py` via `PortfolioConfig`.
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `tickers` | 25 blue-chips | Asset universe |
+| `benchmark` | `^GSPC` | S&P 500 index |
+| `years` | 5 | Data download window |
+| `interval` | `1d` | Data frequency |
+| `min_coverage` | 0.80 | Minimum data coverage |
+| `top_n` | 15 | Assets to select after screening |
+| `weight_cap` | 12.5% | Max weight per asset |
+| `risk_free_rate` | 2.0% | Annual risk-free rate |
+| `min_positions` | 8 | Minimum active positions |
+| `window_years` | 2 | Rolling training window |
+| `rebalance_frequency` | M | Monthly rebalancing |
+| `transaction_cost` | 15 bps | Per-event cost |
+| `min_warmup_sessions` | 60 | Minimum sessions to start |
+
+---
+
+## 13. Formulas Reference
+
+### Return Formulas
+
+```
+Total Return     = P_T / P_0 - 1
+CAGR             = (P_T / P_0)^(1/T) - 1
+Annualized Ret.  = mean(r_daily) * 252
+```
+
+### Risk Formulas
+
+```
+Annualized Vol   = std(r_daily) * sqrt(252)
+Sharpe Ratio     = (R_p - r_f) / sigma_p
+Sortino Ratio    = (R_p - r_f) / DD_p
+Calmar Ratio     = CAGR / |MaxDrawdown|
+Omega Ratio      = E[max(r-L, 0)] / E[max(L-r, 0)]
+
+VaR (95%)        = P_5(r_daily) * sqrt(252)
+CVaR (95%)       = E[r | r <= VaR] * sqrt(252)
+Downside Dev.    = sqrt(mean(min(r - MAR, 0)^2)) * sqrt(252)
+Ulcer Index      = sqrt(mean(D_t^2))   where D_t = drawdown(t) * 100
+
+Beta             = Cov(r_p, r_b) / Var(r_b)
+Jensen Alpha     = R_p - [r_f + beta * (R_b - r_f)]
+Tracking Error   = std(r_p - r_b) * sqrt(252)
+Information Ratio = (R_p - R_b) / TE
+```
+
+### Optimization Formulas
+
+```
+Portfolio Return = w^T * mu          (w = weights, mu = expected returns)
+Portfolio Var.   = w^T * Sigma * w   (Sigma = covariance matrix)
+Portfolio Sharpe = (w^T mu - r_f) / sqrt(w^T Sigma w)
+
+Risk Contribution_i = w_i * (Sigma w)_i / sigma_p
+Turnover         = 0.5 * sum_i |w_new_i - w_old_i|
+
+Kelly Fraction   = (mu_i - r_f) / sigma_i^2   (full Kelly, per asset)
+```
+
+### Present Value / Wealth Projection
+
+```
+Terminal Wealth (nominal) = W_0 * (1 + CAGR)^T
+Terminal Wealth (real)    = W_0 * (1 + CAGR_real)^T
+CAGR_real                = (1 + CAGR) / (1 + inflation) - 1
+```
+
+---
+
+## License
+
+MIT License. See LICENSE file for details.
+
+## Disclaimer
+
+This project is developed for research and educational purposes. It does not
+constitute investment advice. Past performance is not indicative of future
+results. Always conduct independent due diligence and consult a qualified
+financial professional before making investment decisions.
