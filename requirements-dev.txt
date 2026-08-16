@@ -1,0 +1,6 @@
+# Development dependencies (linting, testing). Not needed to run main.py.
+#
+# Install:  pip install -r requirements.txt -r requirements-dev.txt
+
+pytest>=8.0.0
+ruff>=0.6.0

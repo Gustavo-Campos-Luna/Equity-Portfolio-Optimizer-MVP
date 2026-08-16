@@ -74,8 +74,12 @@ equity-portfolio-optimizer/
 │   │   └── performance_report.py # PerformanceReport class
 │   └── visualization/
 │       └── charts.py            # ChartEngine class
+├── tests/                       # pytest suite (metrics, optimizer, screener)
 ├── main.py                      # Orchestration entry point
+├── pyproject.toml               # ruff + pytest config
 ├── requirements.txt
+├── requirements-dev.txt         # pytest, ruff (not needed to run main.py)
+├── LICENSE
 └── README.md
 ```
 
@@ -100,6 +104,20 @@ python -m venv .venv
 source .venv/bin/activate   # macOS/Linux
 .venv\Scripts\activate      # Windows
 pip install -r requirements.txt
+```
+
+### 3.1 Running Tests
+
+The test suite covers the quantitative logic modules (metrics, optimizer,
+screener) with edge cases: NaN handling, short price series, zero-variance
+assets, and degenerate/infeasible optimizer inputs. It does not test
+`main.py`, `market_data.py`, or `charts.py`, which require network access
+or produce visual output.
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+ruff check .
 ```
 
 ---
