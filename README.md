@@ -621,6 +621,19 @@ CAGR_real                = (1 + CAGR) / (1 + inflation) - 1
 
 ---
 
+## Development Notes
+
+This project was built with AI assistance (Claude): the initial implementation,
+the modular refactor from a single script into `src/`, and a later audit pass
+that fixed a pandas-compatibility bug breaking the backtest, removed dead code,
+added the test suite, and re-verified every figure in this README against a
+live run of `main.py`. The methodology (MPT formulation, risk metrics,
+walk-forward design) and the interpretation of results were reviewed by me.
+
+*[Gustavo: adjust this paragraph to reflect what you personally validated —
+e.g., which formulas you checked by hand, which design choices were yours
+vs. suggested.]*
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
