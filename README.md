@@ -372,24 +372,25 @@ Turnover = 0.5 * sum_i |w_new_i - w_old_i|
 
 ## 9. Results and Analysis
 
-The results below are representative of a 5-year backtest (approximately
-57 monthly rebalancing periods) using the default blue-chip universe of
-25 S&P 500 constituents.
+The results below come from an actual run of `main.py` on 2026-08-16, using
+the default blue-chip universe of 25 S&P 500 constituents and a 5-year data
+window (2021-08-17 to 2026-08-16, 58 monthly rebalancing periods).
 
 ### 9.1 Performance Summary
 
 | Metric | Max Sharpe | Min Variance | Risk Parity | S&P 500 |
 |--------|-----------|--------------|-------------|---------|
-| Total Return | ~126% | ~100% | ~100% | ~76% |
-| CAGR | ~19.1% | ~16.0% | ~16.1% | ~12.9% |
-| Annualized Volatility | ~15.5% | ~14.7% | ~14.3% | ~17.2% |
-| Sharpe Ratio | ~1.07 | ~0.95 | ~0.99 | ~0.63 |
-| Sortino Ratio | ~1.45 | ~1.32 | ~1.38 | ~0.82 |
-| Maximum Drawdown | ~-20.6% | ~-19.8% | ~-17.8% | ~-25.4% |
-| Beta | ~0.83 | ~0.79 | ~0.74 | 1.00 |
+| Total Return | 126.8% | 100.9% | 105.4% | 70.5% |
+| CAGR | 19.1% | 16.1% | 16.9% | 12.1% |
+| Annualized Volatility | 14.8% | 14.2% | 13.5% | 17.3% |
+| Sharpe Ratio | 1.12 | 0.99 | 1.08 | 0.63 |
+| Sortino Ratio | 1.66 | 1.45 | 1.58 | — |
+| Maximum Drawdown | -20.6% | -19.8% | -17.8% | -25.4% |
+| Beta | 0.76 | 0.71 | 0.66 | 1.00 |
 
-*Results are illustrative and will vary with the data period, universe, and
-configuration. Re-run main.py for current figures.*
+*Results depend on the data window (today minus 5 years) and will differ on
+re-run as the window rolls forward. Re-run `python main.py` for current
+figures — see [Limitations](#11-limitations-and-assumptions).*
 
 ### 9.2 Risk Attribution Analysis
 
@@ -399,14 +400,14 @@ high-beta constituents in favor of quality-factor characteristics
 (high Sharpe, low CVaR). This beta reduction accounts for a portion of
 the lower drawdown profile relative to the benchmark.
 
-Risk Parity exhibits the lowest beta (~0.74) because the covariance-based
+Risk Parity exhibits the lowest beta (0.66) because the covariance-based
 weighting naturally reduces exposure to high-volatility names that dominate
 the cap-weighted S&P 500.
 
 ### 9.3 Transaction Cost Analysis
 
 The monthly rebalancing cadence generates annualized turnover of approximately
-145–155%, resulting in a transaction cost drag of approximately 0.22% per
+112–125%, resulting in a transaction cost drag of approximately 0.17–0.19% per
 year. Despite this, all strategies maintain a substantial net alpha above the
 benchmark, suggesting that the screening and optimization signal is persistent
 enough to justify the rebalancing frequency.
@@ -421,10 +422,13 @@ at each strategy's backtested CAGR, adjusted for 2.5% annual inflation.
 
 | Strategy | 10-Year Nominal | 10-Year Real | 20-Year Nominal | 20-Year Real |
 |----------|----------------|-------------|-----------------|-------------|
-| Max Sharpe (~19.1% CAGR) | ~$580K | ~$456K | ~$3.36M | ~$2.08M |
-| Min Variance (~16.0% CAGR) | ~$441K | ~$347K | ~$1.95M | ~$1.20M |
-| Risk Parity (~16.1% CAGR) | ~$446K | ~$351K | ~$1.99M | ~$1.23M |
-| S&P 500 (~12.9% CAGR) | ~$336K | ~$264K | ~$1.13M | ~$0.70M |
+| Max Sharpe (19.1% CAGR) | $574.6K | $448.9K | $3.30M | $2.02M |
+| Min Variance (16.1% CAGR) | $446.4K | $348.8K | $1.99M | $1.22M |
+| Risk Parity (16.9% CAGR) | $475.7K | $371.6K | $2.26M | $1.38M |
+| S&P 500 (12.1% CAGR) | $312.5K | $244.1K | $0.98M | $0.60M |
+
+S&P 500 figures are computed with the same formula from its standalone CAGR
+(not produced by `wealth_projection`, which only runs over `backtest_results`).
 
 *Past CAGR does not guarantee future returns. Projections are for
 analytical purposes only.*
@@ -473,7 +477,7 @@ construction:
 
 1. Disciplined monthly rebalancing to factor-screened weights generates
    consistent excess returns at an acceptable cost of approximately
-   0.22% per year in transaction drag.
+   0.17–0.19% per year in transaction drag.
 2. Covariance-aware optimization (Min Variance, Risk Parity) provides
    meaningful drawdown reduction without sacrificing returns.
 3. The minimum-positions constraint (8 active holdings) is binding
@@ -539,7 +543,7 @@ All parameters are defined in `src/config/settings.py` via `PortfolioConfig`.
 | `risk_free_rate` | 2.0% | Annual risk-free rate |
 | `min_positions` | 8 | Minimum active positions |
 | `window_years` | 2 | Rolling training window |
-| `rebalance_frequency` | M | Monthly rebalancing |
+| `rebalance_frequency` | ME | Monthly rebalancing |
 | `transaction_cost` | 15 bps | Per-event cost |
 | `min_warmup_sessions` | 60 | Minimum sessions to start |
 
