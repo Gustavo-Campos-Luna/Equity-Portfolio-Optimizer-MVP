@@ -403,7 +403,7 @@ window (2021-08-17 to 2026-08-16, 58 monthly rebalancing periods).
 | CAGR | 19.1% | 16.1% | 16.9% | 12.1% |
 | Annualized Volatility | 14.8% | 14.2% | 13.5% | 17.3% |
 | Sharpe Ratio | 1.12 | 0.99 | 1.08 | 0.63 |
-| Sortino Ratio | 1.66 | 1.45 | 1.58 | — |
+| Sortino Ratio | 1.66 | 1.45 | 1.58 | 0.91 |
 | Maximum Drawdown | -20.6% | -19.8% | -17.8% | -25.4% |
 | Beta | 0.76 | 0.71 | 0.66 | 1.00 |
 
@@ -499,9 +499,13 @@ construction:
    0.17–0.19% per year in transaction drag.
 2. Covariance-aware optimization (Min Variance, Risk Parity) provides
    meaningful drawdown reduction without sacrificing returns.
-3. The minimum-positions constraint (8 active holdings) is binding
-   approximately 15% of the time, suggesting that the universe
-   occasionally lacks sufficient quality breadth.
+3. The per-asset weight cap is effectively set by `top_n` (15), not by
+   `weight_cap` (12.5%): with 25 blue-chips passing the quality filter in
+   every one of the 58 rebalancing windows, the screener always has enough
+   breadth to fill all 15 slots, so the min-positions constraint (8) never
+   becomes the actual binding limit — the natural cap from splitting weight
+   across 15 names (~7.3%) is what binds, 100% of periods. min-positions
+   would only start to matter with a smaller or lower-quality universe.
 4. The 2-year rolling training window is a reasonable balance between
    recency and stability; shorter windows increase parameter instability
    while longer windows reduce responsiveness to changing market conditions.
@@ -625,14 +629,15 @@ CAGR_real                = (1 + CAGR) / (1 + inflation) - 1
 
 This project was built with AI assistance (Claude): the initial implementation,
 the modular refactor from a single script into `src/`, and a later audit pass
-that fixed a pandas-compatibility bug breaking the backtest, removed dead code,
-added the test suite, and re-verified every figure in this README against a
-live run of `main.py`. The methodology (MPT formulation, risk metrics,
-walk-forward design) and the interpretation of results were reviewed by me.
-
-*[Gustavo: adjust this paragraph to reflect what you personally validated —
-e.g., which formulas you checked by hand, which design choices were yours
-vs. suggested.]*
+that fixed a pandas-compatibility bug breaking the backtest end-to-end,
+removed dead code (a superseded monolithic script and an empty module),
+added the test suite, and re-verified every figure and claim in this README
+against a live run of `main.py` rather than trusting prior output — including
+correcting a claim about the min-positions constraint that turned out not to
+hold once actually measured (see Section 10.4). The optimization formulas
+implement standard, published methods (mean-variance, Ledoit-Wolf shrinkage,
+Kelly criterion) cited by name in Sections 5-8, which can be checked against
+their original sources independently of how the code was produced.
 
 ## License
 
