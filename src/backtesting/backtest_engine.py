@@ -29,8 +29,6 @@ from src.optimization.portfolio_optimizer import PortfolioOptimizer
 
 logger = logging.getLogger(__name__)
 
-_FREQ_PERIODS: Dict[str, int] = {"M": 12, "Q": 4, "A": 1, "W": 52}
-
 
 class BacktestEngine:
     """
