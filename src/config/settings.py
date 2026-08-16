@@ -5,6 +5,7 @@ All rate parameters are expressed as annual decimals (e.g., 0.07 = 7%).
 Modify this file to customize the asset universe, optimization constraints,
 and backtesting parameters before running main.py.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -44,8 +45,8 @@ class PortfolioConfig:
     window_years : int
         In-sample training window (years) for the rolling backtest.
     rebalance_frequency : str
-        Pandas offset alias for rebalancing cadence. Options: 'M' (monthly),
-        'Q' (quarterly), 'A' (annual).
+        Pandas offset alias for rebalancing cadence. Options: 'ME' (monthly),
+        'QE' (quarterly), 'YE' (annual), 'W' (weekly).
     transaction_cost : float
         One-way transaction cost applied per rebalancing event (e.g., 0.0015
         = 15 basis points).
@@ -71,17 +72,38 @@ class PortfolioConfig:
 
     # --- Backtesting ---
     window_years: int = 2
-    rebalance_frequency: str = "M"
+    rebalance_frequency: str = "ME"
     transaction_cost: float = 0.0015
     min_warmup_sessions: int = 60
 
     def __post_init__(self) -> None:
         if not self.tickers:
             self.tickers = [
-                "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META",
-                "JPM", "XOM", "CVX", "UNH", "JNJ", "PEP", "KO",
-                "PG", "HD", "BAC", "WMT", "DIS", "CRM", "NFLX",
-                "V", "MA", "TSM", "ABBV", "TMO",
+                "AAPL",
+                "MSFT",
+                "NVDA",
+                "AMZN",
+                "GOOGL",
+                "META",
+                "JPM",
+                "XOM",
+                "CVX",
+                "UNH",
+                "JNJ",
+                "PEP",
+                "KO",
+                "PG",
+                "HD",
+                "BAC",
+                "WMT",
+                "DIS",
+                "CRM",
+                "NFLX",
+                "V",
+                "MA",
+                "TSM",
+                "ABBV",
+                "TMO",
             ]
 
     def validate(self) -> None:
@@ -94,10 +116,10 @@ class PortfolioConfig:
             )
         if not 0.0 < self.min_coverage <= 1.0:
             raise ValueError("min_coverage must be in (0, 1].")
-        if self.rebalance_frequency not in ("M", "Q", "A", "W"):
+        if self.rebalance_frequency not in ("ME", "QE", "YE", "W"):
             raise ValueError(
                 f"Unsupported rebalance_frequency: '{self.rebalance_frequency}'. "
-                "Use 'M', 'Q', 'A', or 'W'."
+                "Use 'ME', 'QE', 'YE', or 'W'."
             )
 
 

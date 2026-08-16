@@ -5,6 +5,7 @@ Reduces the investable universe to a curated subset of high-quality assets
 prior to portfolio optimization. Multiple scoring methodologies are provided
 to accommodate different investment mandates.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,7 +14,7 @@ from typing import Callable, Dict, Optional
 import numpy as np
 import pandas as pd
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +96,7 @@ class AssetScreener:
 
         if method not in self._METHODS:
             raise ValueError(
-                f"Unknown screening method '{method}'. "
-                f"Valid options: {list(self._METHODS.keys())}."
+                f"Unknown screening method '{method}'. Valid options: {list(self._METHODS.keys())}."
             )
 
         m = metrics.copy()
@@ -106,7 +106,9 @@ class AssetScreener:
 
         logger.info(
             "AssetScreener [%s]: selected %d of %d assets.",
-            method, len(m), len(metrics),
+            method,
+            len(m),
+            len(metrics),
         )
         return m
 
@@ -124,12 +126,7 @@ class AssetScreener:
             vol_n = _normalize(m["AnnualizedVol"])
             mom_n = _normalize(m.get("Momentum12M", pd.Series(0.5, index=m.index)))
             cvar_n = _normalize(m.get("CVaR_95", pd.Series(0.0, index=m.index)).abs())
-            return (
-                0.60 * sharpe_n
-                + 0.15 * (1 - vol_n)
-                + 0.15 * mom_n
-                + 0.10 * (1 - cvar_n)
-            )
+            return 0.60 * sharpe_n + 0.15 * (1 - vol_n) + 0.15 * mom_n + 0.10 * (1 - cvar_n)
 
         def sharpe_only(m: pd.DataFrame) -> pd.Series:
             return _normalize(m["Sharpe"])

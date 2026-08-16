@@ -14,22 +14,20 @@ Critical design decisions
 - The quality filter is called with window_years rather than the total
   sample size, so the minimum-session threshold reflects the rolling window.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
-import numpy as np
 import pandas as pd
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 from src.metrics.financial_metrics import MetricsCalculator
 from src.optimization.asset_screener import AssetScreener
 from src.optimization.portfolio_optimizer import PortfolioOptimizer
 
 logger = logging.getLogger(__name__)
-
-_FREQ_PERIODS: Dict[str, int] = {"M": 12, "Q": 4, "A": 1, "W": 52}
 
 
 class BacktestEngine:
@@ -82,10 +80,11 @@ class BacktestEngine:
         """
         cfg = self.config
         logger.info(
-            "Starting backtest: method=%s, screening=%s, "
-            "window=%dY, rebalance=%s.",
-            optimization_method, screening_method,
-            cfg.window_years, cfg.rebalance_frequency,
+            "Starting backtest: method=%s, screening=%s, window=%dY, rebalance=%s.",
+            optimization_method,
+            screening_method,
+            cfg.window_years,
+            cfg.rebalance_frequency,
         )
 
         px = prices[universe].dropna(how="all")
@@ -94,10 +93,7 @@ class BacktestEngine:
         dates = returns.index
 
         rebalance_dates = (
-            pd.Series(index=dates, data=1)
-            .resample(cfg.rebalance_frequency)
-            .last()
-            .index
+            pd.Series(index=dates, data=1).resample(cfg.rebalance_frequency).last().index
         )
 
         portfolio_returns = pd.Series(index=dates, dtype=float)
@@ -107,32 +103,29 @@ class BacktestEngine:
 
         for t in rebalance_dates:
             start_date = t - pd.DateOffset(years=cfg.window_years)
-            hist_data = px.loc[
-                (px.index > start_date) & (px.index <= t)
-            ].dropna(how="all", axis=1)
+            hist_data = px.loc[(px.index > start_date) & (px.index <= t)].dropna(how="all", axis=1)
 
             if len(hist_data) < cfg.min_warmup_sessions:
                 logger.debug(
                     "Skipping %s: %d sessions < %d required.",
-                    t.date(), len(hist_data), cfg.min_warmup_sessions,
+                    t.date(),
+                    len(hist_data),
+                    cfg.min_warmup_sessions,
                 )
                 continue
 
-            hist_data = self._calc.quality_filter(
-                hist_data, window_years=cfg.window_years
-            )
+            hist_data = self._calc.quality_filter(hist_data, window_years=cfg.window_years)
 
             if hist_data.shape[1] < cfg.min_positions:
                 logger.debug(
                     "Skipping %s: only %d assets pass quality filter.",
-                    t.date(), hist_data.shape[1],
+                    t.date(),
+                    hist_data.shape[1],
                 )
                 continue
 
             try:
-                weights = self._compute_weights(
-                    hist_data, optimization_method, screening_method
-                )
+                weights = self._compute_weights(hist_data, optimization_method, screening_method)
             except Exception as exc:
                 logger.warning("Skipping rebalance at %s: %s", t.date(), exc)
                 continue
@@ -180,15 +173,12 @@ class BacktestEngine:
         metrics = self._calc.compute_asset_metrics(
             hist_data, benchmark=benchmark, rf=self.config.risk_free_rate
         )
-        selected = self._screener.screen(
-            metrics, top_n=self.config.top_n, method=screening_method
-        )
+        selected = self._screener.screen(metrics, top_n=self.config.top_n, method=screening_method)
         picks = selected.index.tolist()
 
         if len(picks) < self.config.min_positions:
             raise ValueError(
-                f"Only {len(picks)} assets selected; "
-                f"minimum {self.config.min_positions} required."
+                f"Only {len(picks)} assets selected; minimum {self.config.min_positions} required."
             )
 
         opt = self._optimizer

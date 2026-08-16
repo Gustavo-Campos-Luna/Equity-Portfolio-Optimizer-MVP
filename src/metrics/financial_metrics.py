@@ -16,6 +16,7 @@ Factor metrics   : Momentum (6M, 12M), Beta, Tracking Error,
                    Information Ratio, Hit Rate
 Distribution     : Skewness, Kurtosis
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,7 +25,7 @@ from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 
 logger = logging.getLogger(__name__)
 
@@ -124,13 +125,13 @@ class MetricsCalculator:
 
         if len(keep) < 3:
             relaxed = max(int(actual_sessions * 0.25), 20)
-            session_pass_relaxed = set(
-                session_counts[session_counts >= relaxed].index
-            )
+            session_pass_relaxed = set(session_counts[session_counts >= relaxed].index)
             keep = list(coverage_pass & session_pass_relaxed)
             logger.info(
                 "Session threshold relaxed from %d to %d. Assets retained: %d.",
-                min_sessions, relaxed, len(keep),
+                min_sessions,
+                relaxed,
+                len(keep),
             )
 
         return prices[keep]
@@ -196,14 +197,10 @@ class MetricsCalculator:
 
         # --- Momentum ---
         mom_6m = (
-            df.iloc[-1] / df.iloc[-126] - 1
-            if len(df) >= 126
-            else pd.Series(0.0, index=df.columns)
+            df.iloc[-1] / df.iloc[-126] - 1 if len(df) >= 126 else pd.Series(0.0, index=df.columns)
         )
         mom_12m = (
-            df.iloc[-1] / df.iloc[-252] - 1
-            if len(df) >= 252
-            else pd.Series(0.0, index=df.columns)
+            df.iloc[-1] / df.iloc[-252] - 1 if len(df) >= 252 else pd.Series(0.0, index=df.columns)
         )
 
         # --- Distribution ---
@@ -253,9 +250,7 @@ class MetricsCalculator:
         Tracking Error = std(excess_returns) * sqrt(252)
         Information Ratio = mean(excess_returns) * 252 / Tracking Error
         """
-        aligned = pd.concat(
-            [portfolio_returns, benchmark_returns], axis=1
-        ).dropna()
+        aligned = pd.concat([portfolio_returns, benchmark_returns], axis=1).dropna()
         if len(aligned) < 30:
             return np.nan, np.nan
 
@@ -320,9 +315,7 @@ class MetricsCalculator:
         return drawdown.min()
 
     @staticmethod
-    def _downside_deviation(
-        returns: pd.DataFrame, rf: float = 0.0
-    ) -> pd.Series:
+    def _downside_deviation(returns: pd.DataFrame, rf: float = 0.0) -> pd.Series:
         """
         Annualized downside deviation (semi-deviation below risk-free rate).
         Used in the Sortino ratio denominator.
@@ -330,12 +323,10 @@ class MetricsCalculator:
         daily_rf = rf / TRADING_DAYS
         excess = returns.subtract(daily_rf)
         downside = excess.clip(upper=0)
-        return (downside ** 2).mean() ** 0.5 * np.sqrt(TRADING_DAYS)
+        return (downside**2).mean() ** 0.5 * np.sqrt(TRADING_DAYS)
 
     @staticmethod
-    def _cvar(
-        returns: pd.DataFrame, confidence: float = 0.95
-    ) -> pd.Series:
+    def _cvar(returns: pd.DataFrame, confidence: float = 0.95) -> pd.Series:
         """
         Annualized Conditional Value at Risk (Expected Shortfall) at the
         given confidence level.
@@ -351,9 +342,7 @@ class MetricsCalculator:
         return cvar * np.sqrt(TRADING_DAYS)
 
     @staticmethod
-    def _omega_ratio(
-        returns: pd.DataFrame, threshold: float = 0.0
-    ) -> pd.Series:
+    def _omega_ratio(returns: pd.DataFrame, threshold: float = 0.0) -> pd.Series:
         """
         Omega Ratio: probability-weighted ratio of gains to losses relative
         to a threshold return.
@@ -379,4 +368,4 @@ class MetricsCalculator:
         """
         rolling_max = prices.expanding().max()
         drawdown_pct = (prices - rolling_max) / rolling_max * 100
-        return (drawdown_pct ** 2).mean() ** 0.5
+        return (drawdown_pct**2).mean() ** 0.5

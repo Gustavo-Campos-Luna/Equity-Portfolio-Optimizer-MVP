@@ -5,6 +5,7 @@ Produces structured performance summaries, strategy comparisons,
 and evidence-based conclusions suitable for institutional presentations
 and investment research documentation.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,13 +14,13 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 from src.metrics.financial_metrics import MetricsCalculator
 
 logger = logging.getLogger(__name__)
 
 TRADING_DAYS = 252
-_FREQ_PERIODS: Dict[str, int] = {"M": 12, "Q": 4, "A": 1, "W": 52}
+_FREQ_PERIODS: Dict[str, int] = {"ME": 12, "QE": 4, "YE": 1, "W": 52}
 
 
 class PerformanceReport:
@@ -90,20 +91,17 @@ class PerformanceReport:
         max_dd = float(dd_port.min())
         recovery_days = self._recovery_time(dd_port)
 
-        downside_dev = float(
-            np.sqrt(((port.clip(upper=0)) ** 2).mean()) * np.sqrt(TRADING_DAYS)
-        )
+        downside_dev = float(np.sqrt(((port.clip(upper=0)) ** 2).mean()) * np.sqrt(TRADING_DAYS))
         ulcer = float(
             np.sqrt(
                 (((1 + port).cumprod() / (1 + port).cumprod().expanding().max() - 1) ** 2).mean()
-            ) * 100
+            )
+            * 100
         )
 
         # VaR and CVaR
         var_95 = float(port.quantile(0.05) * np.sqrt(TRADING_DAYS))
-        cvar_95 = float(
-            port[port <= port.quantile(0.05)].mean() * np.sqrt(TRADING_DAYS)
-        )
+        cvar_95 = float(port[port <= port.quantile(0.05)].mean() * np.sqrt(TRADING_DAYS))
 
         # --- Risk-adjusted ratios ---
         port_sharpe = (port_ann - rf) / port_vol if port_vol > 0 else np.nan
@@ -120,11 +118,7 @@ class PerformanceReport:
         te, ir = self._calc.tracking_error_and_ir(port, bench)
         excess_ann = port_ann - bench_ann
         hit_rate = float((port > bench).mean())
-        beta = (
-            float(np.cov(port, bench)[0, 1] / np.var(bench))
-            if np.var(bench) > 0
-            else np.nan
-        )
+        beta = float(np.cov(port, bench)[0, 1] / np.var(bench)) if np.var(bench) > 0 else np.nan
         alpha = port_ann - (rf + beta * (bench_ann - rf)) if not np.isnan(beta) else np.nan
 
         # --- Transaction analysis ---
@@ -351,10 +345,8 @@ class PerformanceReport:
             "-" * 40,
             f"  Highest Sharpe Ratio:      {best_sharpe} "
             f"({df.loc[best_sharpe, 'Portfolio Sharpe']:.2f})",
-            f"  Best Information Ratio:    {best_ir} "
-            f"({df.loc[best_ir, 'Information Ratio']:.2f})",
-            f"  Lowest Maximum Drawdown:   {best_dd} "
-            f"({df.loc[best_dd, 'Max Drawdown']:.2%})",
+            f"  Best Information Ratio:    {best_ir} ({df.loc[best_ir, 'Information Ratio']:.2f})",
+            f"  Lowest Maximum Drawdown:   {best_dd} ({df.loc[best_dd, 'Max Drawdown']:.2%})",
             f"  Best Calmar Ratio:         {best_calmar} "
             f"({df.loc[best_calmar, 'Calmar Ratio']:.2f})",
             "",
@@ -374,12 +366,10 @@ class PerformanceReport:
 
         # --- Risk-return efficiency ---
         lines += ["Risk-Return Efficiency", "-" * 40]
-        bench_vol = df["Benchmark Sharpe"].mean()  # proxy
+        bench_sharpe_avg = df["Benchmark Sharpe"].mean()
         for strategy, row in df.iterrows():
             sharpe_vs_bench = (
-                row["Portfolio Sharpe"] / df["Benchmark Sharpe"].mean()
-                if df["Benchmark Sharpe"].mean() > 0
-                else np.nan
+                row["Portfolio Sharpe"] / bench_sharpe_avg if bench_sharpe_avg > 0 else np.nan
             )
             rel = (
                 f"{sharpe_vs_bench:.1f}x benchmark Sharpe"
@@ -395,10 +385,7 @@ class PerformanceReport:
             dd = row.get("Max Drawdown", np.nan)
             cvar = row.get("CVaR 95%", np.nan)
             if not np.isnan(dd) and not np.isnan(cvar):
-                lines.append(
-                    f"  {strategy}: Max DD = {dd:.2%}, "
-                    f"CVaR (95%) = {cvar:.2%}"
-                )
+                lines.append(f"  {strategy}: Max DD = {dd:.2%}, CVaR (95%) = {cvar:.2%}")
         lines.append("")
 
         # --- Transaction efficiency ---
@@ -466,8 +453,6 @@ class PerformanceReport:
             for h in horizon_years:
                 fv_nominal = initial_capital * (1 + cagr) ** h
                 fv_real = initial_capital * (1 + real_cagr) ** h
-                # Present value of terminal wealth discounted at CAGR
-                pv_terminal = initial_capital  # by definition (FV discounted at CAGR)
                 gain = fv_nominal - initial_capital
                 multiple = fv_nominal / initial_capital
 

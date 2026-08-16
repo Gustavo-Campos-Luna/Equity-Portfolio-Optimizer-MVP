@@ -15,6 +15,7 @@ All strategies share a common constraint framework:
   - 0 <= w_i <= weight_cap for all assets.
   - Minimum number of active positions enforced via a dynamic cap.
 """
+
 from __future__ import annotations
 
 import logging
@@ -22,9 +23,9 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import minimize, OptimizeResult
+from scipy.optimize import OptimizeResult, minimize
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 from src.metrics.financial_metrics import MetricsCalculator
 
 logger = logging.getLogger(__name__)
@@ -152,7 +153,8 @@ class PortfolioOptimizer:
         x0 = np.full(n, 1.0 / n)
 
         result: OptimizeResult = minimize(
-            objective, x0,
+            objective,
+            x0,
             method="SLSQP",
             bounds=bounds,
             constraints=constraints,
@@ -161,8 +163,8 @@ class PortfolioOptimizer:
 
         if not result.success:
             logger.warning(
-                "Risk Parity optimizer did not converge (%s). "
-                "Falling back to equal weight.", result.message,
+                "Risk Parity optimizer did not converge (%s). Falling back to equal weight.",
+                result.message,
             )
 
         final_w = result.x if result.success else x0
@@ -275,7 +277,8 @@ class PortfolioOptimizer:
         x0 = np.full(n, 1.0 / n)
 
         result: OptimizeResult = minimize(
-            objective, x0,
+            objective,
+            x0,
             method="SLSQP",
             bounds=bounds,
             constraints=constraints,

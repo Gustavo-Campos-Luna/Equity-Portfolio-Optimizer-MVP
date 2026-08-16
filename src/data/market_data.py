@@ -4,6 +4,7 @@ Market data acquisition and cleaning layer.
 All external data dependencies are isolated here. Swapping the data provider
 (e.g., Bloomberg, Refinitiv) requires changes only in this module.
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,7 +14,7 @@ from typing import List, Optional
 import pandas as pd
 import yfinance as yf
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,10 @@ class DataFetcher:
 
         logger.info(
             "Fetching %d symbols from %s to %s (interval=%s).",
-            len(all_symbols), start, end, interval,
+            len(all_symbols),
+            start,
+            end,
+            interval,
         )
 
         raw = yf.download(
@@ -117,9 +121,7 @@ class DataFetcher:
             if isinstance(raw["Close"], pd.Series):
                 return raw["Close"].to_frame(tickers[0])
             return raw["Close"].copy()
-        raise ValueError(
-            "Unexpected yfinance DataFrame structure: 'Close' column not found."
-        )
+        raise ValueError("Unexpected yfinance DataFrame structure: 'Close' column not found.")
 
     @staticmethod
     def _clean(prices: pd.DataFrame) -> pd.DataFrame:
