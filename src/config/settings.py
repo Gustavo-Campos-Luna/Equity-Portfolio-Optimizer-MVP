@@ -44,8 +44,8 @@ class PortfolioConfig:
     window_years : int
         In-sample training window (years) for the rolling backtest.
     rebalance_frequency : str
-        Pandas offset alias for rebalancing cadence. Options: 'M' (monthly),
-        'Q' (quarterly), 'A' (annual).
+        Pandas offset alias for rebalancing cadence. Options: 'ME' (monthly),
+        'QE' (quarterly), 'YE' (annual), 'W' (weekly).
     transaction_cost : float
         One-way transaction cost applied per rebalancing event (e.g., 0.0015
         = 15 basis points).
@@ -71,7 +71,7 @@ class PortfolioConfig:
 
     # --- Backtesting ---
     window_years: int = 2
-    rebalance_frequency: str = "M"
+    rebalance_frequency: str = "ME"
     transaction_cost: float = 0.0015
     min_warmup_sessions: int = 60
 
@@ -94,10 +94,10 @@ class PortfolioConfig:
             )
         if not 0.0 < self.min_coverage <= 1.0:
             raise ValueError("min_coverage must be in (0, 1].")
-        if self.rebalance_frequency not in ("M", "Q", "A", "W"):
+        if self.rebalance_frequency not in ("ME", "QE", "YE", "W"):
             raise ValueError(
                 f"Unsupported rebalance_frequency: '{self.rebalance_frequency}'. "
-                "Use 'M', 'Q', 'A', or 'W'."
+                "Use 'ME', 'QE', 'YE', or 'W'."
             )
 
 

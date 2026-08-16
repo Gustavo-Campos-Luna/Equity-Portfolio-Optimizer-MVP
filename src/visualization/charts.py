@@ -349,7 +349,7 @@ class ChartEngine:
             logger.warning("Less than 60 days; skipping heatmap.")
             return
 
-        monthly = portfolio_returns.resample("M").apply(
+        monthly = portfolio_returns.resample("ME").apply(
             lambda x: (1 + x).prod() - 1
         )
         monthly.index = pd.to_datetime(monthly.index)

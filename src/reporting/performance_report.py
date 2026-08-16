@@ -19,7 +19,7 @@ from src.metrics.financial_metrics import MetricsCalculator
 logger = logging.getLogger(__name__)
 
 TRADING_DAYS = 252
-_FREQ_PERIODS: Dict[str, int] = {"M": 12, "Q": 4, "A": 1, "W": 52}
+_FREQ_PERIODS: Dict[str, int] = {"ME": 12, "QE": 4, "YE": 1, "W": 52}
 
 
 class PerformanceReport:
