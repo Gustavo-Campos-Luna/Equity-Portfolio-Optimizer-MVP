@@ -15,6 +15,7 @@ Run
 Optional arguments (edit PortfolioConfig in src/config/settings.py to
 customize universe, constraints, and backtest parameters).
 """
+
 from __future__ import annotations
 
 import logging
@@ -23,8 +24,8 @@ from typing import Dict
 
 import pandas as pd
 
-from src.config.settings import PortfolioConfig
 from src.backtesting.backtest_engine import BacktestEngine
+from src.config.settings import PortfolioConfig
 from src.data.market_data import DataFetcher
 from src.metrics.financial_metrics import MetricsCalculator
 from src.optimization.asset_screener import AssetScreener
@@ -88,8 +89,14 @@ def run(config: PortfolioConfig = None, initial_capital: float = 100_000.0) -> N
 
     print("\n--- Top 15 Assets by Sharpe Ratio ---")
     display_cols = [
-        "CAGR", "AnnualizedVol", "Sharpe", "Sortino",
-        "Calmar", "CVaR_95", "Momentum12M", "MaxDrawdown",
+        "CAGR",
+        "AnnualizedVol",
+        "Sharpe",
+        "Sortino",
+        "Calmar",
+        "CVaR_95",
+        "Momentum12M",
+        "MaxDrawdown",
     ]
     print(metrics[display_cols].head(15).round(4).to_string())
 
@@ -125,9 +132,7 @@ def run(config: PortfolioConfig = None, initial_capital: float = 100_000.0) -> N
         print(f"\n--- {label} Portfolio ---")
         print(weights.round(4).to_string())
         print(
-            f"  Expected Return: {perf[0]:.2%} | "
-            f"Volatility: {perf[1]:.2%} | "
-            f"Sharpe: {perf[2]:.2f}"
+            f"  Expected Return: {perf[0]:.2%} | Volatility: {perf[1]:.2%} | Sharpe: {perf[2]:.2f}"
         )
 
         # Risk attribution
@@ -157,7 +162,8 @@ def run(config: PortfolioConfig = None, initial_capital: float = 100_000.0) -> N
     for strategy in STRATEGIES:
         logger.info("  Running backtest: %s", strategy)
         bt_returns, turnover_df = backtest.run(
-            clean_prices, universe,
+            clean_prices,
+            universe,
             optimization_method=strategy,
             screening_method="enhanced_composite",
         )
@@ -207,7 +213,8 @@ def run(config: PortfolioConfig = None, initial_capital: float = 100_000.0) -> N
             port_ret = strategy_returns[strategy]
             bench_aligned = bench_ret.reindex(port_ret.index).dropna()
             charts.performance_dashboard(
-                port_ret, bench_aligned,
+                port_ret,
+                bench_aligned,
                 strategy.replace("_", " ").title(),
             )
 
@@ -245,7 +252,7 @@ def run(config: PortfolioConfig = None, initial_capital: float = 100_000.0) -> N
     print(f"  Transaction cost:       {config.transaction_cost:.2%}")
     print(f"  Top-N assets:           {config.top_n}")
     print(f"  Minimum positions:      {config.min_positions}")
-    print(f"  Output charts:          output/charts/")
+    print("  Output charts:          output/charts/")
 
 
 if __name__ == "__main__":

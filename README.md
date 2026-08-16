@@ -127,6 +127,7 @@ or instantiate `PortfolioConfig` directly in `main.py`:
 
 ```python
 from src.config.settings import PortfolioConfig
+
 config = PortfolioConfig(
     tickers=["AAPL", "MSFT", "NVDA", "V", "MA"],
     top_n=5,

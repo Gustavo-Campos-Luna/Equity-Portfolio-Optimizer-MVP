@@ -5,6 +5,7 @@ All rate parameters are expressed as annual decimals (e.g., 0.07 = 7%).
 Modify this file to customize the asset universe, optimization constraints,
 and backtesting parameters before running main.py.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -78,10 +79,31 @@ class PortfolioConfig:
     def __post_init__(self) -> None:
         if not self.tickers:
             self.tickers = [
-                "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META",
-                "JPM", "XOM", "CVX", "UNH", "JNJ", "PEP", "KO",
-                "PG", "HD", "BAC", "WMT", "DIS", "CRM", "NFLX",
-                "V", "MA", "TSM", "ABBV", "TMO",
+                "AAPL",
+                "MSFT",
+                "NVDA",
+                "AMZN",
+                "GOOGL",
+                "META",
+                "JPM",
+                "XOM",
+                "CVX",
+                "UNH",
+                "JNJ",
+                "PEP",
+                "KO",
+                "PG",
+                "HD",
+                "BAC",
+                "WMT",
+                "DIS",
+                "CRM",
+                "NFLX",
+                "V",
+                "MA",
+                "TSM",
+                "ABBV",
+                "TMO",
             ]
 
     def validate(self) -> None:

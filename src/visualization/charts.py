@@ -12,11 +12,12 @@ Usage
     engine.drawdown(port_ret, "Max Sharpe")
     engine.rolling_sharpe(port_ret, bench_ret, "Max Sharpe")
 """
+
 from __future__ import annotations
 
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ import seaborn as sns
 from matplotlib.dates import DateFormatter
 from matplotlib.ticker import FuncFormatter
 
-from src.config.settings import PortfolioConfig, DEFAULT_CONFIG
+from src.config.settings import DEFAULT_CONFIG, PortfolioConfig
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +95,7 @@ class ChartEngine:
         Displays growth of $1 invested from the start of the backtest,
         with a performance summary annotation.
         """
-        aligned = pd.concat(
-            [portfolio_returns, benchmark_returns], axis=1
-        ).dropna()
+        aligned = pd.concat([portfolio_returns, benchmark_returns], axis=1).dropna()
         if aligned.empty:
             logger.warning("No aligned data; skipping cumulative returns chart.")
             return
@@ -106,18 +105,26 @@ class ChartEngine:
 
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(
-            port_cum.index, port_cum.values,
-            linewidth=2.2, label=strategy_name, color=_PALETTE["portfolio"],
+            port_cum.index,
+            port_cum.values,
+            linewidth=2.2,
+            label=strategy_name,
+            color=_PALETTE["portfolio"],
         )
         ax.plot(
-            bench_cum.index, bench_cum.values,
-            linewidth=1.8, label="S&P 500", color=_PALETTE["benchmark"],
+            bench_cum.index,
+            bench_cum.values,
+            linewidth=1.8,
+            label="S&P 500",
+            color=_PALETTE["benchmark"],
             alpha=0.85,
         )
 
         ax.set_title(
             f"Cumulative Returns  |  {strategy_name} vs S&P 500",
-            fontsize=14, fontweight="bold", pad=16,
+            fontsize=14,
+            fontweight="bold",
+            pad=16,
         )
         ax.set_xlabel("Date", fontsize=11)
         ax.set_ylabel("Cumulative Return", fontsize=11)
@@ -134,9 +141,13 @@ class ChartEngine:
             f"Excess: {port_total - bench_total:+.1%}"
         )
         ax.text(
-            0.98, 0.04, summary,
-            transform=ax.transAxes, fontsize=9,
-            va="bottom", ha="right",
+            0.98,
+            0.04,
+            summary,
+            transform=ax.transAxes,
+            fontsize=9,
+            va="bottom",
+            ha="right",
             bbox=dict(boxstyle="round,pad=0.4", facecolor="whitesmoke", alpha=0.9),
         )
 
@@ -172,7 +183,9 @@ class ChartEngine:
 
         ax.set_title(
             f"Drawdown Analysis  |  {strategy_name}",
-            fontsize=14, fontweight="bold", pad=16,
+            fontsize=14,
+            fontweight="bold",
+            pad=16,
         )
         ax.set_xlabel("Date", fontsize=11)
         ax.set_ylabel("Drawdown", fontsize=11)
@@ -181,12 +194,14 @@ class ChartEngine:
         ax.grid(True, alpha=0.3)
 
         annotation = (
-            f"Maximum Drawdown: {max_dd:.2%}\n"
-            f"Trough Date: {max_dd_date.strftime('%Y-%m-%d')}"
+            f"Maximum Drawdown: {max_dd:.2%}\nTrough Date: {max_dd_date.strftime('%Y-%m-%d')}"
         )
         ax.text(
-            0.02, 0.04, annotation,
-            transform=ax.transAxes, fontsize=9,
+            0.02,
+            0.04,
+            annotation,
+            transform=ax.transAxes,
+            fontsize=9,
             va="bottom",
             bbox=dict(boxstyle="round,pad=0.4", facecolor="#FADBD8", alpha=0.9),
         )
@@ -207,9 +222,7 @@ class ChartEngine:
         Assesses strategy consistency. A stable, positive Sharpe over time
         indicates robust risk-adjusted performance.
         """
-        aligned = pd.concat(
-            [portfolio_returns, benchmark_returns], axis=1
-        ).dropna()
+        aligned = pd.concat([portfolio_returns, benchmark_returns], axis=1).dropna()
         if aligned.empty:
             logger.warning("No data for rolling Sharpe chart.")
             return
@@ -222,7 +235,8 @@ class ChartEngine:
         if len(port) < window:
             logger.warning(
                 "Insufficient data (%d days) for %d-month rolling Sharpe.",
-                len(port), window_months,
+                len(port),
+                window_months,
             )
             return
 
@@ -236,12 +250,18 @@ class ChartEngine:
 
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(
-            port_sr.index, port_sr.values,
-            linewidth=2.2, label=strategy_name, color=_PALETTE["portfolio"],
+            port_sr.index,
+            port_sr.values,
+            linewidth=2.2,
+            label=strategy_name,
+            color=_PALETTE["portfolio"],
         )
         ax.plot(
-            bench_sr.index, bench_sr.values,
-            linewidth=1.8, label="S&P 500", color=_PALETTE["benchmark"],
+            bench_sr.index,
+            bench_sr.values,
+            linewidth=1.8,
+            label="S&P 500",
+            color=_PALETTE["benchmark"],
             alpha=0.85,
         )
         ax.axhline(0, color="red", linestyle="--", linewidth=1.0, alpha=0.6)
@@ -251,7 +271,9 @@ class ChartEngine:
 
         ax.set_title(
             f"{window_months}-Month Rolling Sharpe  |  {strategy_name} vs S&P 500",
-            fontsize=14, fontweight="bold", pad=16,
+            fontsize=14,
+            fontweight="bold",
+            pad=16,
         )
         ax.set_xlabel("Date", fontsize=11)
         ax.set_ylabel("Rolling Sharpe Ratio", fontsize=11)
@@ -261,14 +283,15 @@ class ChartEngine:
 
         avg_port = port_sr.mean()
         avg_bench = bench_sr.mean()
-        summary = (
-            f"{strategy_name} avg: {avg_port:.2f}\n"
-            f"S&P 500 avg: {avg_bench:.2f}"
-        )
+        summary = f"{strategy_name} avg: {avg_port:.2f}\nS&P 500 avg: {avg_bench:.2f}"
         ax.text(
-            0.98, 0.04, summary,
-            transform=ax.transAxes, fontsize=9,
-            va="bottom", ha="right",
+            0.98,
+            0.04,
+            summary,
+            transform=ax.transAxes,
+            fontsize=9,
+            va="bottom",
+            ha="right",
             bbox=dict(boxstyle="round,pad=0.4", facecolor="lightcyan", alpha=0.9),
         )
 
@@ -317,17 +340,23 @@ class ChartEngine:
 
         ax.set_title(
             f"Portfolio Composition  |  {strategy_name}",
-            fontsize=13, fontweight="bold", pad=18,
+            fontsize=13,
+            fontweight="bold",
+            pad=18,
         )
 
         n_pos = int((weights > 1e-4).sum())
         max_w = weights.max()
-        hhi = (weights ** 2).sum()  # Herfindahl-Hirschman Index
+        hhi = (weights**2).sum()  # Herfindahl-Hirschman Index
         stats = f"Positions: {n_pos}  |  Max: {max_w:.1%}  |  HHI: {hhi:.3f}"
         ax.text(
-            0.5, -0.04, stats,
-            transform=ax.transAxes, fontsize=9,
-            ha="center", color="gray",
+            0.5,
+            -0.04,
+            stats,
+            transform=ax.transAxes,
+            fontsize=9,
+            ha="center",
+            color="gray",
         )
 
         plt.tight_layout()
@@ -349,16 +378,9 @@ class ChartEngine:
             logger.warning("Less than 60 days; skipping heatmap.")
             return
 
-        monthly = portfolio_returns.resample("ME").apply(
-            lambda x: (1 + x).prod() - 1
-        )
+        monthly = portfolio_returns.resample("ME").apply(lambda x: (1 + x).prod() - 1)
         monthly.index = pd.to_datetime(monthly.index)
-        matrix = (
-            monthly
-            .groupby([monthly.index.year, monthly.index.month])
-            .first()
-            .unstack()
-        )
+        matrix = monthly.groupby([monthly.index.year, monthly.index.month]).first().unstack()
         matrix.columns = [calendar.month_abbr[m] for m in matrix.columns]
 
         fig, ax = plt.subplots(figsize=(13, max(4, len(matrix) * 0.6 + 2)))
@@ -376,7 +398,9 @@ class ChartEngine:
         )
         ax.set_title(
             f"Monthly Returns Heatmap  |  {strategy_name}",
-            fontsize=13, fontweight="bold", pad=16,
+            fontsize=13,
+            fontweight="bold",
+            pad=16,
         )
         ax.set_xlabel("Month", fontsize=10)
         ax.set_ylabel("Year", fontsize=10)
@@ -417,22 +441,33 @@ class ChartEngine:
         colors = plt.cm.RdYlGn(sharpes_arr / max_sr)
 
         fig, ax = plt.subplots(figsize=(10, 7))
-        for i, (name, ret, vol, color) in enumerate(
-            zip(names, returns, vols, colors)
-        ):
+        for name, ret, vol, color in zip(names, returns, vols, colors):
             marker = "s" if name == "S&P 500" else "o"
             size = 120 if name == "S&P 500" else 160
-            ax.scatter(vol, ret, c=[color], s=size, marker=marker,
-                       edgecolors="black", linewidth=1.2, zorder=3)
+            ax.scatter(
+                vol,
+                ret,
+                c=[color],
+                s=size,
+                marker=marker,
+                edgecolors="black",
+                linewidth=1.2,
+                zorder=3,
+            )
             ax.annotate(
-                name, (vol, ret),
-                xytext=(6, 4), textcoords="offset points",
-                fontsize=9, fontweight="bold",
+                name,
+                (vol, ret),
+                xytext=(6, 4),
+                textcoords="offset points",
+                fontsize=9,
+                fontweight="bold",
             )
 
         ax.set_title(
             "Risk-Return Analysis  |  Annualized CAGR vs Volatility",
-            fontsize=13, fontweight="bold", pad=16,
+            fontsize=13,
+            fontweight="bold",
+            pad=16,
         )
         ax.set_xlabel("Annualized Volatility", fontsize=11)
         ax.set_ylabel("Annualized Return (CAGR)", fontsize=11)
@@ -460,15 +495,9 @@ class ChartEngine:
             return
 
         strategies = list(strategy_returns.keys())
-        turnovers = [
-            backtest_results[s].get("Annual Turnover", 0) for s in strategies
-        ]
-        gross_rets = [
-            backtest_results[s].get("Portfolio CAGR", 0) for s in strategies
-        ]
-        drags = [
-            backtest_results[s].get("Transaction Cost Drag", 0) for s in strategies
-        ]
+        turnovers = [backtest_results[s].get("Annual Turnover", 0) for s in strategies]
+        gross_rets = [backtest_results[s].get("Portfolio CAGR", 0) for s in strategies]
+        drags = [backtest_results[s].get("Transaction Cost Drag", 0) for s in strategies]
         net_rets = [g - d for g, d in zip(gross_rets, drags)]
         labels = [s.replace("_", " ").title() for s in strategies]
 
@@ -483,16 +512,34 @@ class ChartEngine:
             ax1.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.005,
-                f"{val:.0%}", ha="center", va="bottom", fontsize=9, fontweight="bold",
+                f"{val:.0%}",
+                ha="center",
+                va="bottom",
+                fontsize=9,
+                fontweight="bold",
             )
         ax1.grid(True, alpha=0.3, axis="y")
 
         x = np.arange(len(labels))
         w = 0.35
-        b2 = ax2.bar(x - w / 2, gross_rets, w, label="Gross CAGR",
-                     color=_PALETTE["accent"], edgecolor="black", alpha=0.85)
-        b3 = ax2.bar(x + w / 2, net_rets, w, label="Net CAGR",
-                     color=_PALETTE["fill_neg"], edgecolor="black", alpha=0.85)
+        b2 = ax2.bar(
+            x - w / 2,
+            gross_rets,
+            w,
+            label="Gross CAGR",
+            color=_PALETTE["accent"],
+            edgecolor="black",
+            alpha=0.85,
+        )
+        b3 = ax2.bar(
+            x + w / 2,
+            net_rets,
+            w,
+            label="Net CAGR",
+            color=_PALETTE["fill_neg"],
+            edgecolor="black",
+            alpha=0.85,
+        )
         ax2.set_title("Transaction Cost Impact on Returns", fontsize=12, fontweight="bold")
         ax2.set_ylabel("CAGR", fontsize=10)
         ax2.set_xticks(x)
@@ -505,13 +552,19 @@ class ChartEngine:
             ax2.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.001,
-                f"{val:.1%}", ha="center", va="bottom", fontsize=8,
+                f"{val:.1%}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
             )
         for bar, val in zip(b3, net_rets):
             ax2.text(
                 bar.get_x() + bar.get_width() / 2,
                 bar.get_height() + 0.001,
-                f"{val:.1%}", ha="center", va="bottom", fontsize=8,
+                f"{val:.1%}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
             )
 
         plt.tight_layout()
@@ -531,7 +584,6 @@ class ChartEngine:
             return
 
         strategies = projection_df.index.get_level_values("Strategy").unique()
-        horizons = projection_df.index.get_level_values("Horizon (yr)").unique()
         colors = [_PALETTE["portfolio"], _PALETTE["benchmark"], _PALETTE["accent"]]
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
@@ -540,12 +592,20 @@ class ChartEngine:
             sub = projection_df.loc[strategy]
             color = colors[i % len(colors)]
             ax1.plot(
-                sub.index, sub["Terminal Wealth (nominal)"] / 1e3,
-                marker="o", linewidth=2, label=strategy, color=color,
+                sub.index,
+                sub["Terminal Wealth (nominal)"] / 1e3,
+                marker="o",
+                linewidth=2,
+                label=strategy,
+                color=color,
             )
             ax2.plot(
-                sub.index, sub["Terminal Wealth (real)"] / 1e3,
-                marker="o", linewidth=2, label=strategy, color=color,
+                sub.index,
+                sub["Terminal Wealth (real)"] / 1e3,
+                marker="o",
+                linewidth=2,
+                label=strategy,
+                color=color,
                 linestyle="--",
             )
 
@@ -554,8 +614,11 @@ class ChartEngine:
             (ax2, "Real Terminal Wealth (Inflation-Adjusted)"),
         ]:
             ax.axhline(
-                initial_capital / 1e3, color="gray",
-                linestyle=":", linewidth=1.2, label="Initial Capital",
+                initial_capital / 1e3,
+                color="gray",
+                linestyle=":",
+                linewidth=1.2,
+                label="Initial Capital",
             )
             ax.set_title(title, fontsize=12, fontweight="bold")
             ax.set_xlabel("Investment Horizon (years)", fontsize=10)
@@ -565,7 +628,8 @@ class ChartEngine:
 
         plt.suptitle(
             f"Wealth Projection  |  Initial Capital: ${initial_capital:,.0f}",
-            fontsize=13, fontweight="bold",
+            fontsize=13,
+            fontweight="bold",
         )
         plt.tight_layout()
         self._save_or_show(fig, "wealth_projection.png")
@@ -601,15 +665,11 @@ class ChartEngine:
         """
         for strategy, weights in current_weights.items():
             if not weights.empty:
-                self.portfolio_composition(
-                    weights, strategy.replace("_", " ").title()
-                )
+                self.portfolio_composition(weights, strategy.replace("_", " ").title())
 
         for strategy, returns in strategy_returns.items():
             if not returns.empty:
-                self.monthly_returns_heatmap(
-                    returns, strategy.replace("_", " ").title()
-                )
+                self.monthly_returns_heatmap(returns, strategy.replace("_", " ").title())
 
         self.risk_return_scatter(backtest_results)
         self.turnover_analysis(strategy_returns, backtest_results)
